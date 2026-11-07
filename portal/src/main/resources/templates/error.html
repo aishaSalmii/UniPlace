@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Something went wrong')}"></head>
+<body>
+<header th:replace="~{fragments/layout :: nav}"></header>
+<main>
+    <div class="card">
+        <h1>Something went wrong</h1>
+        <p th:text="|The request could not be completed (status ${status}).|">The request could not be completed.</p>
+        <p class="muted" th:if="${message}" th:text="${message}">message</p>
+        <details th:if="${trace}"><summary>Technical details</summary>
+            <p th:text="${exception}">exception</p>
+            <pre th:text="${trace}" style="white-space: pre-wrap; font-size: 12px">trace</pre>
+        </details>
+        <a th:href="@{/dashboard}">Back to the dashboard</a>
+    </div>
+</main>
+</body>
+</html>

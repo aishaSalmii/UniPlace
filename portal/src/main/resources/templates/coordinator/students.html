@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Students')}"></head>
+<body>
+<header th:replace="~{fragments/layout :: nav}"></header>
+<main>
+    <div th:replace="~{fragments/layout :: flash}"></div>
+    <h1>Students</h1>
+    <table>
+        <tr><th>Number</th><th>Name</th><th>Program</th><th>GPA</th><th>Credits</th><th>Standing</th><th>Prior internships</th></tr>
+        <tr th:each="s : ${students}">
+            <td th:text="${s.studentNumber}">n</td>
+            <td><a th:href="@{/coordinator/students/{id}(id=${s.id})}" th:text="${s.fullName}">name</a></td>
+            <td th:text="${s.program}">p</td>
+            <td th:text="${s.gpa}">g</td>
+            <td th:text="${s.creditsCompleted}">c</td>
+            <td th:text="${@fmt.label(s.standing)}">s</td>
+            <td th:text="${s.priorInternships}">0</td>
+        </tr>
+    </table>
+    <form class="card" method="post" th:action="@{/coordinator/students}">
+        <h2>New student</h2>
+        <div class="row">
+            <div><label for="studentNumber">Student number (8 digits)</label><input type="text" id="studentNumber" name="studentNumber" maxlength="8"></div>
+            <div><label for="fullName">Full name</label><input type="text" id="fullName" name="fullName"></div>
+            <div><label for="email">E-mail</label><input type="email" id="email" name="email"></div>
+        </div>
+        <div class="row">
+            <div><label for="program">Program</label><input type="text" id="program" name="program"></div>
+            <div><label for="gpa">GPA</label><input type="number" step="0.01" min="0" max="4" id="gpa" name="gpa"></div>
+            <div><label for="creditsCompleted">Credits</label><input type="number" min="0" max="140" id="creditsCompleted" name="creditsCompleted"></div>
+            <div><label for="priorInternships">Prior internships</label><input type="number" min="0" id="priorInternships" name="priorInternships" value="0"></div>
+        </div>
+        <div class="row">
+            <div><label for="username">Username</label><input type="text" id="username" name="username"></div>
+            <div><label for="password">Initial password</label><input type="password" id="password" name="password"></div>
+        </div>
+        <div class="actions"><button type="submit">Create student</button></div>
+    </form>
+</main>
+</body>
+</html>

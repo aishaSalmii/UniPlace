@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Tools')}"></head>
+<body>
+<header th:replace="~{fragments/layout :: nav}"></header>
+<main>
+    <div th:replace="~{fragments/layout :: flash}"></div>
+    <h1>Tools</h1>
+    <form class="card" method="post" th:action="@{/coordinator/tools/generate}">
+        <h2>Generate test data</h2>
+        <p class="muted">Adds synthetic students, postings, applications and notifications for volume and performance
+            testing. Generated records are named "Generated ..." and have no login accounts. To return to the
+            original data, restart the system with the reset option.</p>
+        <label for="count">Number of applications (1 to 10,000)</label>
+        <input type="number" id="count" name="count" value="1000" min="1" max="10000">
+        <div class="actions"><button type="submit">Generate</button></div>
+    </form>
+</main>
+</body>
+</html>

@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Audit log')}"></head>
+<body>
+<header th:replace="~{fragments/layout :: nav}"></header>
+<main>
+    <h1>Audit log</h1>
+    <table>
+        <tr><th>When</th><th>User</th><th>Action</th><th>Target</th><th>Old value</th><th>New value</th></tr>
+        <tr th:each="e : ${page.content}">
+            <td th:text="${@fmt.dateTime(e.at)}">d</td><td th:text="${e.username}">u</td><td th:text="${e.action}">a</td>
+            <td th:text="${e.target}">t</td><td th:text="${e.oldValue}">o</td><td th:text="${e.newValue}">n</td>
+        </tr>
+        <tr th:if="${page.empty}"><td colspan="6" class="muted">No entries.</td></tr>
+    </table>
+    <div th:replace="~{fragments/layout :: pager(${page}, '/coordinator/audit')}"></div>
+</main>
+</body>
+</html>

@@ -1,0 +1,247 @@
+openapi: 3.0.3
+info:
+  title: UniPlace Matching & Compliance Engine
+  version: 1.0.0
+  description: |
+    Stateless service used by the UniPlace Portal. Everything the Engine needs is sent in each request.
+    All bodies are JSON. Dates use the format yyyy-MM-dd. Date-times use ISO-8601 with an offset, for
+    example 2026-11-22T10:00:00+03:00; a date-time without an offset is interpreted as UTC.
+    Working-hour rules are evaluated in the campus time zone, Asia/Qatar (UTC+3).
+servers:
+  - url: http://127.0.0.1:8081/api/v1
+paths:
+  /health:
+    get:
+      summary: Liveness check
+      responses:
+        "200":
+          description: The Engine is running
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status: { type: string, example: UP }
+                  version: { type: string, example: 1.0.0 }
+  /eligibility:
+    post:
+      summary: Checks whether a student may apply to a posting
+      description: |
+        Rules, each of which adds one entry to `reasons` when it fails:
+        GPA at least `minGpa`; credits at least `minCredits`; a student whose standing is PROBATION has at most
+        1 prior internship; a CV is present, is a PDF and is at most 2 MB (2,097,152 bytes); a transcript is
+        present, is a PDF, is at most 5 MB (5,242,880 bytes) and is valid on `asOf`. A transcript is valid for
+        180 days counting its issue date as day 1, and is not valid before its issue date.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/EligibilityRequest" }
+      responses:
+        "200":
+          description: Evaluation result
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/EligibilityResult" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+  /match:
+    post:
+      summary: Computes the match score between a student's skills and a posting
+      description: |
+        score = 70 x (matched required / number of required) + 30 x (matched nice-to-have / number of
+        nice-to-have), where the second term is 0 when the posting lists no nice-to-have skills. The score is
+        rounded to the nearest integer (halves round up). Skills are compared ignoring letter case and leading or
+        trailing spaces.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/MatchRequest" }
+      responses:
+        "200":
+          description: Match result
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/MatchResult" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+  /rank:
+    post:
+      summary: Orders the candidates of a posting
+      description: |
+        Order: score descending, then GPA descending, then earliest `submittedAt`, then `applicationId`
+        ascending. `aboveCut` holds the first `seats` identifiers of `ranked` (fewer when there are fewer
+        candidates). At most 500 candidates per request.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/RankRequest" }
+      responses:
+        "200":
+          description: Ranking
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/RankResult" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+  /schedule/validate:
+    post:
+      summary: Validates an interview slot
+      description: |
+        A slot is valid when it lasts 15 to 120 minutes, falls on Sunday to Thursday, starts at or after 08:00,
+        ends at or before 18:00 on the same day, and does not overlap any slot in `recruiterSlots` or
+        `studentSlots`. Two slots overlap when one starts before the other ends; a slot that starts exactly when
+        another ends does not overlap it.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/SlotRequest" }
+      responses:
+        "200":
+          description: Validation result
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/SlotResult" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+  /allowance:
+    post:
+      summary: Computes the total allowance of a placement
+      description: |
+        months = whole calendar months from `startDate` to `endDate` (both inclusive) plus the remaining days
+        divided by 30. A month runs from a day to the day before the same day of the next month; when the next
+        month has no such day, the month runs to the end of that next month. Lines, in this order: base = monthlyAllowance x months; transport = transportSupplement x
+        months when weeklyHours is 30 or more; cap adjustment = minus (monthlyAllowance + monthly transport -
+        monthlyCap) x months when that difference is positive; penalty = minus subtotal x min(penaltyCap,
+        penaltyRate x started weeks of lateDays); total. Only the total is rounded, to 2 decimals (halves up);
+        line amounts are shown rounded to 2 decimals.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/AllowanceRequest" }
+      responses:
+        "200":
+          description: Allowance statement
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AllowanceResult" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+components:
+  responses:
+    ValidationError:
+      description: The request is not valid. The Engine never answers 500 to well-formed JSON.
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              error: { type: string, example: validation }
+              field: { type: string, example: gpa }
+              message: { type: string, example: must be between 0 and 4 }
+  schemas:
+    Document:
+      type: object
+      required: [type, sizeBytes, mimeType]
+      properties:
+        type: { type: string, enum: [CV, TRANSCRIPT] }
+        sizeBytes: { type: integer, minimum: 0 }
+        mimeType: { type: string, example: application/pdf }
+        issueDate: { type: string, format: date, description: Required for transcripts }
+    EligibilityRequest:
+      type: object
+      required: [gpa, creditsCompleted, standing, priorInternships, minGpa, minCredits, asOf]
+      properties:
+        gpa: { type: number, minimum: 0, maximum: 4 }
+        creditsCompleted: { type: integer, minimum: 0, maximum: 140 }
+        standing: { type: string, enum: [GOOD, PROBATION] }
+        priorInternships: { type: integer, minimum: 0 }
+        minGpa: { type: number, minimum: 0, maximum: 4 }
+        minCredits: { type: integer, minimum: 0, maximum: 140 }
+        asOf: { type: string, format: date }
+        documents:
+          type: array
+          items: { $ref: "#/components/schemas/Document" }
+    EligibilityResult:
+      type: object
+      properties:
+        eligible: { type: boolean }
+        reasons:
+          type: array
+          items: { type: string }
+    MatchRequest:
+      type: object
+      required: [studentSkills, requiredSkills]
+      properties:
+        studentSkills: { type: array, items: { type: string } }
+        requiredSkills: { type: array, minItems: 1, items: { type: string } }
+        niceToHaveSkills: { type: array, items: { type: string } }
+    MatchResult:
+      type: object
+      properties:
+        score: { type: integer, minimum: 0, maximum: 100 }
+        matchedRequired: { type: array, items: { type: string } }
+        missingRequired: { type: array, items: { type: string } }
+        matchedNiceToHave: { type: array, items: { type: string } }
+    Candidate:
+      type: object
+      required: [applicationId, score, gpa, submittedAt]
+      properties:
+        applicationId: { type: integer, format: int64, minimum: 1 }
+        score: { type: integer, minimum: 0, maximum: 100 }
+        gpa: { type: number, minimum: 0, maximum: 4 }
+        submittedAt: { type: string, format: date-time }
+    RankRequest:
+      type: object
+      required: [seats, candidates]
+      properties:
+        seats: { type: integer, minimum: 1 }
+        candidates:
+          type: array
+          maxItems: 500
+          items: { $ref: "#/components/schemas/Candidate" }
+    RankResult:
+      type: object
+      properties:
+        ranked: { type: array, items: { type: integer, format: int64 } }
+        aboveCut: { type: array, items: { type: integer, format: int64 } }
+    Slot:
+      type: object
+      required: [start, end]
+      properties:
+        start: { type: string, format: date-time }
+        end: { type: string, format: date-time }
+    SlotRequest:
+      type: object
+      required: [candidate]
+      properties:
+        candidate: { $ref: "#/components/schemas/Slot" }
+        recruiterSlots: { type: array, items: { $ref: "#/components/schemas/Slot" } }
+        studentSlots: { type: array, items: { $ref: "#/components/schemas/Slot" } }
+    SlotResult:
+      type: object
+      properties:
+        valid: { type: boolean }
+        conflicts: { type: array, items: { type: string } }
+    AllowanceRequest:
+      type: object
+      required: [monthlyAllowance, startDate, endDate, weeklyHours, lateDays]
+      properties:
+        monthlyAllowance: { type: number, minimum: 0, maximum: 5000 }
+        startDate: { type: string, format: date }
+        endDate: { type: string, format: date }
+        weeklyHours: { type: integer, minimum: 10, maximum: 40 }
+        lateDays: { type: integer, minimum: 0 }
+        transportSupplement: { type: number, default: 300 }
+        monthlyCap: { type: number, default: 5000 }
+        penaltyRate: { type: number, default: 0.05 }
+        penaltyCap: { type: number, default: 0.20 }
+    AllowanceLine:
+      type: object
+      properties:
+        label: { type: string }
+        amount: { type: number }
+    AllowanceResult:
+      type: object
+      properties:
+        total: { type: number }
+        lines: { type: array, items: { $ref: "#/components/schemas/AllowanceLine" } }

@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head(${postingId == null ? 'New posting' : 'Edit posting'})}"></head>
+<body>
+<header th:replace="~{fragments/layout :: nav}"></header>
+<main>
+    <div th:replace="~{fragments/layout :: flash}"></div>
+    <h1 th:text="${postingId == null ? 'New posting' : 'Edit posting'}">Posting</h1>
+    <form class="card" method="post" th:object="${form}"
+          th:action="${postingId == null} ? @{/recruiter/postings} : @{/recruiter/postings/{id}(id=${postingId})}">
+        <label for="title">Title</label><input type="text" id="title" th:field="*{title}" maxlength="150">
+        <label for="description">Description</label><textarea id="description" th:field="*{description}" maxlength="4000"></textarea>
+        <div class="row">
+            <div><label for="requiredSkills">Required skills (comma-separated)</label><input type="text" id="requiredSkills" th:field="*{requiredSkills}"></div>
+            <div><label for="niceToHaveSkills">Nice-to-have skills</label><input type="text" id="niceToHaveSkills" th:field="*{niceToHaveSkills}"></div>
+        </div>
+        <div class="row">
+            <div><label for="minGpa">Minimum GPA</label><input type="number" id="minGpa" step="0.01" min="0" max="4" th:field="*{minGpa}"></div>
+            <div><label for="minCredits">Minimum credits</label><input type="number" id="minCredits" min="0" max="140" th:field="*{minCredits}"></div>
+            <div><label for="seats">Seats</label><input type="number" id="seats" min="1" max="20" th:field="*{seats}"></div>
+        </div>
+        <div class="row">
+            <div><label for="deadline">Application deadline</label><input type="date" id="deadline" th:field="*{deadline}"></div>
+            <div><label for="startDate">Start date</label><input type="date" id="startDate" th:field="*{startDate}"></div>
+            <div><label for="endDate">End date</label><input type="date" id="endDate" th:field="*{endDate}"></div>
+        </div>
+        <div class="row">
+            <div><label for="weeklyHours">Weekly hours</label><input type="number" id="weeklyHours" min="10" max="40" th:field="*{weeklyHours}"></div>
+            <div><label for="monthlyAllowance">Monthly allowance (QAR)</label><input type="number" id="monthlyAllowance" min="0" max="5000" step="0.01" th:field="*{monthlyAllowance}"></div>
+        </div>
+        <div class="actions"><button type="submit">Save</button><a th:href="@{/recruiter/postings}">Cancel</a></div>
+    </form>
+</main>
+</body>
+</html>

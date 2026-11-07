@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Reports')}"></head>
+<body>
+<header th:replace="~{fragments/layout :: nav}"></header>
+<main>
+    <h1>Reports</h1>
+    <div class="card" th:each="t, it : ${tables}">
+        <h2 th:text="${t.title}">title</h2>
+        <table>
+            <tr><th th:each="h : ${t.header}" th:text="${h}">h</th></tr>
+            <tr th:each="r : ${t.rows}"><td th:each="c : ${r}" th:text="${c}">c</td></tr>
+        </table>
+        <p><a th:with="names=${ {'placement','scores','offers','days'} }"
+              th:href="@{/coordinator/reports/{n}.csv(n=${names[it.index]})}">Export CSV</a></p>
+    </div>
+</main>
+</body>
+</html>

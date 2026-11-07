@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head th:fragment="head(title)">
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title th:text="${title} + ' · UniPlace'">UniPlace</title>
+    <link rel="stylesheet" th:href="@{/css/app.css}">
+    <script th:src="@{/js/app.js}" defer></script>
+</head>
+<body>
+<header class="top" th:fragment="nav">
+    <a class="brand" th:href="@{/dashboard}">UniPlace</a>
+    <nav>
+        <a th:href="@{/dashboard}">Dashboard</a>
+        <th:block sec:authorize="hasRole('STUDENT')">
+            <a th:href="@{/postings}">Postings</a>
+            <a th:href="@{/applications}">My applications</a>
+            <a th:href="@{/student/profile}">Profile and documents</a>
+            <a th:href="@{/notifications}">Notifications</a>
+        </th:block>
+        <th:block sec:authorize="hasRole('RECRUITER')">
+            <a th:href="@{/recruiter/postings}">Our postings</a>
+            <a th:href="@{/applications}">Applications</a>
+            <a th:href="@{/recruiter/company}">Company</a>
+            <a th:href="@{/notifications}">Notifications</a>
+        </th:block>
+        <th:block sec:authorize="hasRole('COORDINATOR')">
+            <a th:href="@{/postings}">Postings</a>
+            <a th:href="@{/coordinator/applications}">Applications</a>
+            <a th:href="@{/coordinator/students}">Students</a>
+            <a th:href="@{/coordinator/companies}">Companies</a>
+            <a th:href="@{/coordinator/users}">Users</a>
+            <a th:href="@{/coordinator/reports}">Reports</a>
+            <a th:href="@{/coordinator/outbox}">Outbox</a>
+            <a th:href="@{/coordinator/settings}">Settings</a>
+            <a th:href="@{/coordinator/audit}">Audit log</a>
+            <a th:href="@{/coordinator/tools}">Tools</a>
+        </th:block>
+    </nav>
+    <div class="who" sec:authorize="isAuthenticated()">
+        <a th:href="@{/account/password}" style="color:#fff" sec:authentication="name">user</a>
+        <form class="inline" th:action="@{/account/logout}" method="post"><button type="submit">Log out</button></form>
+    </div>
+</header>
+<div th:fragment="flash">
+    <div class="flash ok" th:if="${success}" th:text="${success}">ok</div>
+    <div class="flash bad" th:if="${error}">
+        <span th:text="${error}">error</span>
+        <ul th:if="${reasons != null and !#lists.isEmpty(reasons)}">
+            <li th:each="r : ${reasons}" th:text="${r}">reason</li>
+        </ul>
+    </div>
+</div>
+<div th:fragment="pager(page, base)" class="pager" th:if="${page.totalPages > 1}">
+    <a th:if="${page.hasPrevious()}" th:href="@{${base}(page=${page.number - 1})}">Previous</a>
+    <span class="muted" th:text="|Page ${page.number + 1} of ${page.totalPages} · ${page.totalElements} records|">Page</span>
+    <a th:if="${page.hasNext()}" th:href="@{${base}(page=${page.number + 1})}">Next</a>
+</div>
+</body>
+</html>

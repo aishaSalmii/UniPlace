@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head(${posting.title})}"></head>
+<body>
+<header th:replace="~{fragments/layout :: nav}"></header>
+<main>
+    <div th:replace="~{fragments/layout :: flash}"></div>
+    <h1 th:text="${posting.title}">title</h1>
+    <div class="card">
+        <p><strong th:text="${posting.company.name}">company</strong> ·
+            <span class="badge" th:classappend="${#strings.toLowerCase(posting.status)}" th:text="${@fmt.label(posting.status)}">s</span></p>
+        <p th:text="${posting.description}">description</p>
+        <table>
+            <tr><th>Required skills</th><td th:text="${#strings.listJoin(posting.requiredSkills, ', ')}">s</td></tr>
+            <tr><th>Nice-to-have skills</th><td th:text="${#strings.listJoin(posting.niceToHaveSkills, ', ')}">s</td></tr>
+            <tr><th>Minimum GPA / credits</th><td th:text="|${posting.minGpa} / ${posting.minCredits}|">g</td></tr>
+            <tr><th>Seats</th><td th:text="|${posting.seats} (${posting.seatsLeft()} left)|">1</td></tr>
+            <tr><th>Application deadline</th><td th:text="${@fmt.date(posting.deadline)}">d</td></tr>
+            <tr><th>Internship dates</th><td th:text="|${@fmt.date(posting.startDate)} to ${@fmt.date(posting.endDate)}|">d</td></tr>
+            <tr><th>Weekly hours</th><td th:text="${posting.weeklyHours}">40</td></tr>
+            <tr><th>Monthly allowance</th><td th:text="${@fmt.money(posting.monthlyAllowance)}">0</td></tr>
+        </table>
+        <div class="actions" th:if="${user.role.name() == 'RECRUITER' and user.company != null and user.company.id == posting.company.id}">
+            <a class="button secondary" th:href="@{/recruiter/postings/{id}/edit(id=${posting.id})}"
+               th:if="${posting.status.name() == 'DRAFT' or posting.status.name() == 'OPEN'}">Edit</a>
+            <form class="inline" method="post" th:action="@{/recruiter/postings/{id}/publish(id=${posting.id})}"
+                  th:if="${posting.status.name() == 'DRAFT'}"><button type="submit">Publish</button></form>
+            <form class="inline" method="post" th:action="@{/recruiter/postings/{id}/close(id=${posting.id})}"
+                  th:if="${posting.status.name() == 'OPEN'}"><button type="submit" class="secondary">Close</button></form>
+            <a class="button secondary" th:href="@{/recruiter/postings/{id}/candidates(id=${posting.id})}">Candidate ranking</a>
+            <a class="button secondary" th:href="@{/applications(postingId=${posting.id})}">Applications</a>
+        </div>
+    </div>
+
+    <div class="card" th:if="${user.role.name() == 'STUDENT'}">
+        <h2>Apply</h2>
+        <p th:unless="${open}" class="muted">This posting is not accepting applications.</p>
+        <form th:if="${open}" method="post" th:action="@{/postings/{id}/apply(id=${posting.id})}" id="apply-form">
+            <label for="letter">Motivation letter (100 to 2,000 characters)</label>
+            <textarea id="letter" name="letter" maxlength="2000" th:text="${letter}" aria-describedby="letter-count"></textarea>
+            <p class="muted" id="letter-count" aria-live="polite"></p>
+            <div class="actions">
+                <button type="submit" id="submit-application" disabled>Submit application</button>
+                <button type="submit" class="secondary" id="ask-feedback"
+                        th:formaction="@{/postings/{id}/feedback(id=${posting.id})}">Get feedback on my letter</button>
+            </div>
+        </form>
+    </div>
+
+    <script th:src="@{/js/letter.js}" defer></script>
+
+    <div class="card ai" th:if="${aiError}"><p th:text="${aiError}">unavailable</p></div>
+    <div class="card ai" th:if="${feedback}" id="feedback">
+        <h2 th:text="|Letter feedback: ${feedback.score} / 100|">Feedback</h2>
+        <p class="muted" th:text="${feedback.source}">source</p>
+        <div class="row">
+            <div><strong>Strengths</strong><ul><li th:each="s : ${feedback.strengths}" th:text="${s}">s</li></ul></div>
+            <div><strong>Gaps</strong><ul><li th:each="s : ${feedback.gaps}" th:text="${s}">s</li></ul></div>
+            <div><strong>Improvements</strong><ul><li th:each="s : ${feedback.improvements}" th:text="${s}">s</li></ul></div>
+        </div>
+    </div>
+</main>
+</body>
+</html>

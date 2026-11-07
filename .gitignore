@@ -1,0 +1,9 @@
+bin/
+target/
+portal/data/
+data/
+logs/
+*.log
+*.env
+.env
+node_modules/

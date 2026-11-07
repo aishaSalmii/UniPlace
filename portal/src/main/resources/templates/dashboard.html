@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Dashboard')}"></head>
+<body>
+<header th:replace="~{fragments/layout :: nav}"></header>
+<main>
+    <div th:replace="~{fragments/layout :: flash}"></div>
+    <h1 th:text="|Welcome, ${user.displayName}|">Welcome</h1>
+
+    <div th:if="${figures}" class="grid">
+        <div class="card" th:each="f : ${figures}">
+            <div class="muted" th:text="${f.key}">label</div>
+            <div class="figure" th:text="${f.value}">0</div>
+        </div>
+    </div>
+
+    <div th:if="${student}">
+        <div class="grid">
+            <div class="card"><div class="muted">Academic standing</div>
+                <div class="figure" th:text="${@fmt.label(student.standing)}">Good</div></div>
+            <div class="card"><div class="muted">Active applications</div>
+                <div class="figure" th:text="|${active} of ${limit}|">0</div></div>
+            <div class="card"><div class="muted">GPA</div>
+                <div class="figure" th:text="${student.gpa}">0</div></div>
+        </div>
+        <div class="card" th:if="${!#lists.isEmpty(pendingOffers)}">
+            <h2>Offers waiting for your answer</h2>
+            <table>
+                <tr><th>Posting</th><th>Answer by</th><th></th></tr>
+                <tr th:each="o : ${pendingOffers}">
+                    <td th:text="${o.application.posting.title}">title</td>
+                    <td th:text="${@fmt.dateTime(o.respondBy)}">date</td>
+                    <td><a th:href="@{/applications/{id}(id=${o.application.id})}">Open</a></td>
+                </tr>
+            </table>
+        </div>
+        <div class="card" th:if="${!#lists.isEmpty(interviews)}">
+            <h2>Upcoming interviews</h2>
+            <table>
+                <tr><th>Posting</th><th>Company</th><th>Date</th><th>Time</th><th>Location</th></tr>
+                <tr th:each="i : ${interviews}">
+                    <td><a th:href="@{/applications/{id}(id=${i.applicationId})}" th:text="${i.posting}">title</a></td>
+                    <td th:text="${i.company}">company</td>
+                    <td th:text="${@fmt.date(i.date)}">date</td>
+                    <td th:text="|${@fmt.time(i.from)} to ${@fmt.time(i.to)}|">time</td>
+                    <td th:text="${i.location}">location</td>
+                </tr>
+            </table>
+        </div>
+        <p><a class="button" th:href="@{/postings}">Browse postings</a></p>
+    </div>
+
+    <div th:if="${user.role.name() == 'RECRUITER'}">
+        <div class="card" th:if="${company == null}">
+            <p>Your account is not linked to a company yet.</p>
+            <a class="button" th:href="@{/recruiter/company}">Register your company</a>
+        </div>
+        <div class="card" th:if="${company != null}">
+            <h2 th:text="${company.name}">Company</h2>
+            <p>Status: <span class="badge" th:classappend="${#strings.toLowerCase(company.status)}"
+                             th:text="${@fmt.label(company.status)}">status</span></p>
+            <table>
+                <tr><th>Posting</th><th>Status</th><th>Deadline</th><th>Seats</th></tr>
+                <tr th:each="p : ${postings}">
+                    <td><a th:href="@{/postings/{id}(id=${p.id})}" th:text="${p.title}">title</a></td>
+                    <td><span class="badge" th:classappend="${#strings.toLowerCase(p.status)}" th:text="${@fmt.label(p.status)}">s</span></td>
+                    <td th:text="${@fmt.date(p.deadline)}">date</td>
+                    <td th:text="|${p.seatsTaken} / ${p.seats}|">0</td>
+                </tr>
+            </table>
+        </div>
+    </div>
+</main>
+</body>
+</html>

@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Companies')}"></head>
+<body>
+<header th:replace="~{fragments/layout :: nav}"></header>
+<main>
+    <div th:replace="~{fragments/layout :: flash}"></div>
+    <h1>Companies</h1>
+    <table>
+        <tr><th>Name</th><th>Sector</th><th>Contact</th><th>Status</th><th></th></tr>
+        <tr th:each="c : ${companies}">
+            <td th:text="${c.name}">n</td>
+            <td th:text="${c.sector}">s</td>
+            <td th:text="${c.contactEmail}">e</td>
+            <td><span class="badge" th:classappend="${#strings.toLowerCase(c.status)}" th:text="${@fmt.label(c.status)}">s</span></td>
+            <td>
+                <form class="inline" method="post" th:if="${c.status.name() != 'APPROVED'}" th:action="@{/coordinator/companies/{id}/approve(id=${c.id})}"><button type="submit">Approve</button></form>
+                <form class="inline" method="post" th:if="${c.status.name() == 'APPROVED'}" th:action="@{/coordinator/companies/{id}/suspend(id=${c.id})}" data-confirm="Suspend this company? Its postings will be hidden and its applications frozen."><button type="submit" class="secondary">Suspend</button></form>
+            </td>
+        </tr>
+    </table>
+</main>
+</body>
+</html>

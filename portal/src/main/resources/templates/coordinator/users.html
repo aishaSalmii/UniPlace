@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Users')}"></head>
+<body>
+<header th:replace="~{fragments/layout :: nav}"></header>
+<main>
+    <div th:replace="~{fragments/layout :: flash}"></div>
+    <h1>Users</h1>
+    <table>
+        <tr><th>Username</th><th>Name</th><th>Role</th><th>Company</th><th>Locked until</th><th></th></tr>
+        <tr th:each="u : ${users}">
+            <td th:text="${u.username}">u</td>
+            <td th:text="${u.displayName}">n</td>
+            <td th:text="${@fmt.label(u.role)}">r</td>
+            <td th:text="${u.company?.name}">c</td>
+            <td th:text="${@fmt.dateTime(u.lockedUntil)}">l</td>
+            <td><form class="inline" method="post" th:if="${u.lockedUntil != null}" th:action="@{/coordinator/users/{id}/unlock(id=${u.id})}"><button type="submit" class="secondary">Unlock</button></form></td>
+        </tr>
+    </table>
+    <form class="card" method="post" th:action="@{/coordinator/users}">
+        <h2>New recruiter or coordinator</h2>
+        <div class="row">
+            <div><label for="username">Username</label><input type="text" id="username" name="username"></div>
+            <div><label for="password">Initial password</label><input type="password" id="password" name="password"></div>
+            <div><label for="role">Role</label><select id="role" name="role"><option value="RECRUITER">Recruiter</option><option value="COORDINATOR">Coordinator</option></select></div>
+        </div>
+        <div class="row">
+            <div><label for="displayName">Name</label><input type="text" id="displayName" name="displayName"></div>
+            <div><label for="email">E-mail</label><input type="email" id="email" name="email"></div>
+            <div><label for="companyId">Company (recruiters)</label><select id="companyId" name="companyId"><option value="">None: the recruiter registers one</option>
+                <option th:each="c : ${companies}" th:value="${c.id}" th:text="${c.name}">c</option></select></div>
+        </div>
+        <div class="actions"><button type="submit">Create user</button></div>
+    </form>
+</main>
+</body>
+</html>

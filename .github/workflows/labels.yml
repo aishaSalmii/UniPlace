@@ -1,0 +1,23 @@
+name: Create labels
+# Run once from the Actions tab (Run workflow). Creates or updates the labels in .github/labels.json.
+on: workflow_dispatch
+permissions:
+  issues: write
+jobs:
+  labels:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Create or update labels
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          # remove labels that are not in the list (GitHub's defaults would clash with ours)
+          keep=$(jq -r '.[].name' .github/labels.json)
+          gh label list --repo "$GITHUB_REPOSITORY" --limit 200 --json name -q '.[].name' | while read -r old; do
+            grep -qxF "$old" <<<"$keep" || gh label delete "$old" --yes --repo "$GITHUB_REPOSITORY"
+          done
+          jq -c '.[]' .github/labels.json | while read -r label; do
+            name=$(jq -r .name <<<"$label"); color=$(jq -r .color <<<"$label"); desc=$(jq -r .description <<<"$label")
+            gh label create "$name" --color "$color" --description "$desc" --force --repo "$GITHUB_REPOSITORY"
+          done

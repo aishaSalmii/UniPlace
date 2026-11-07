@@ -1,0 +1,21 @@
+[
+  {"name": "severity:critical", "color": "b60205", "description": "Blocks a core function, loses or exposes data, or breaks security"},
+  {"name": "severity:major", "color": "d93f0b", "description": "A requirement is violated with a significant effect"},
+  {"name": "severity:minor", "color": "fbca04", "description": "A requirement is violated with a small effect"},
+  {"name": "severity:enhancement", "color": "c2e0c6", "description": "No requirement violated, but a concrete change would clearly improve an existing function"},
+  {"name": "priority:p1", "color": "5319e7", "description": "Fix first"},
+  {"name": "priority:p2", "color": "8a63d2", "description": "Fix soon"},
+  {"name": "priority:p3", "color": "c5b3f0", "description": "Fix when possible"},
+  {"name": "functional", "color": "1d76db", "description": "Functional requirement or business rule"},
+  {"name": "integration", "color": "0e8a16", "description": "Portal and Engine, or Portal and external services"},
+  {"name": "state", "color": "006b75", "description": "State transitions, sequences, concurrency"},
+  {"name": "performance", "color": "e99695", "description": "Response time, throughput, volume, endurance"},
+  {"name": "security", "color": "b60205", "description": "Access control, injection, sessions, secrets"},
+  {"name": "ai", "color": "f9d0c4", "description": "AI Assistant behaviour and prompts"},
+  {"name": "ui", "color": "bfdadc", "description": "Usability, accessibility, compatibility"},
+  {"name": "configuration", "color": "d4c5f9", "description": "Settings and configuration"},
+  {"name": "requirements", "color": "fef2c0", "description": "Defect in the specification itself"},
+  {"name": "tests", "color": "c2e0c6", "description": "Defect in the shipped test suite"},
+  {"name": "duplicate", "color": "cfd3d7", "description": "Same defect as another issue"},
+  {"name": "invalid", "color": "e4e669", "description": "Not reproducible, or no requirement violated and not an enhancement"}
+]

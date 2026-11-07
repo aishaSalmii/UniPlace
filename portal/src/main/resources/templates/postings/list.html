@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Postings')}"></head>
+<body>
+<header th:replace="~{fragments/layout :: nav}"></header>
+<main>
+    <div th:replace="~{fragments/layout :: flash}"></div>
+    <h1>Internship postings</h1>
+    <form class="card" method="get" th:action="@{/postings}">
+        <div class="row">
+            <div><label for="skill">Skill</label>
+                <input type="text" id="skill" name="skill" th:value="${skill}" placeholder="e.g. SQL"></div>
+            <div><label for="companyId">Company</label>
+                <select id="companyId" name="companyId">
+                    <option value="">Any company</option>
+                    <option th:each="c : ${companies}" th:if="${c.status.name() == 'APPROVED'}" th:value="${c.id}"
+                            th:text="${c.name}" th:selected="${c.id == companyId}">c</option>
+                </select></div>
+            <div><label for="minAllowance">Minimum monthly allowance (QAR)</label>
+                <input type="text" inputmode="decimal" id="minAllowance" name="minAllowance" placeholder="e.g. 3,000" th:value="${minAllowance}"></div>
+        </div>
+        <div class="actions"><button type="submit">Search</button><a th:href="@{/postings}">Clear</a></div>
+    </form>
+    <p class="muted" th:text="|${#lists.size(postings)} postings, earliest deadline first|">n postings</p>
+    <table>
+        <tr><th>Posting</th><th>Company</th><th>Required skills</th><th>Allowance</th><th>Deadline</th><th>Status</th></tr>
+        <tr th:each="p : ${postings}">
+            <td><a th:href="@{/postings/{id}(id=${p.id})}" th:text="${p.title}">title</a></td>
+            <td th:utext="${p.company.name}">company</td>
+            <td th:text="${#strings.listJoin(p.requiredSkills, ', ')}">skills</td>
+            <td th:text="${@fmt.money(p.monthlyAllowance)}">0</td>
+            <td th:text="${@fmt.date(p.deadline)}">date</td>
+            <td><span class="badge" th:classappend="${p.status.name() == 'OPEN' and !p.deadline.isBefore(today) ? 'open' : 'closed'}"
+                      th:text="${p.status.name() == 'OPEN' and !p.deadline.isBefore(today) ? 'Open' : 'Closed'}">s</span></td>
+        </tr>
+        <tr th:if="${#lists.isEmpty(postings)}"><td colspan="6" class="muted">No postings match your search.</td></tr>
+    </table>
+</main>
+</body>
+</html>

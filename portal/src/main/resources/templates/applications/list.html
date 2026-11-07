@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Applications')}"></head>
+<body>
+<header th:replace="~{fragments/layout :: nav}"></header>
+<main>
+    <div th:replace="~{fragments/layout :: flash}"></div>
+    <h1 th:text="${user.role.name() == 'STUDENT'} ? 'My applications' : 'Applications'">Applications</h1>
+    <form class="card" method="get" th:action="@{/applications}" th:if="${user.role.name() == 'RECRUITER'}">
+        <div class="row">
+            <div><label for="state">State</label>
+                <select id="state" name="state"><option value="">Any state</option>
+                    <option th:each="s : ${states}" th:value="${s}" th:text="${@fmt.label(s)}" th:selected="${s == state}">s</option>
+                </select></div>
+            <div><label for="postingId">Posting id</label><input type="number" id="postingId" name="postingId" th:value="${postingId}"></div>
+        </div>
+        <div class="actions"><button type="submit">Filter</button></div>
+    </form>
+    <table>
+        <tr><th>Posting</th><th>Company</th><th th:if="${user.role.name() != 'STUDENT'}">Student</th><th>Match score</th><th>Submitted</th><th>State</th></tr>
+        <tr th:each="a : ${page.content}">
+            <td><a th:href="@{/applications/{id}(id=${a.id})}" th:text="${a.posting.title}">t</a></td>
+            <td th:text="${a.posting.company.name}">c</td>
+            <td th:if="${user.role.name() != 'STUDENT'}" th:text="${a.student.fullName}">s</td>
+            <td th:text="${a.matchScore}">0</td>
+            <td th:text="${user.role.name() == 'STUDENT'} ? ${@fmt.dateTime(a.submittedAt)} : ${#temporals.format(a.submittedAt, 'MM/dd/yyyy HH:mm')}">d</td>
+            <td><span class="badge" th:classappend="${#strings.toLowerCase(a.state)}" th:text="${@fmt.label(a.state)}">s</span></td>
+        </tr>
+        <tr th:if="${page.empty}"><td colspan="6" class="muted">No applications.</td></tr>
+    </table>
+    <div class="pager" th:if="${page.totalPages > 1}">
+        <a th:if="${page.hasPrevious()}" th:href="@{/applications(page=${page.number - 1},state=${state},postingId=${postingId})}">Previous</a>
+        <span class="muted" th:text="|Page ${page.number + 1} of ${page.totalPages} · ${page.totalElements} applications|">p</span>
+        <a th:if="${page.hasNext()}" th:href="@{/applications(page=${page.number + 1},state=${state},postingId=${postingId})}">Next</a>
+    </div>
+</main>
+</body>
+</html>

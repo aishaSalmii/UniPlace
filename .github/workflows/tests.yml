@@ -1,0 +1,32 @@
+name: Tests
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+jobs:
+  portal:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+          cache: maven
+      - name: Portal tests
+        working-directory: portal
+        run: bash ./mvnw -B test -Dmaven.test.failure.ignore=true
+      - name: Upload test and coverage reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: portal-reports
+          path: |
+            portal/target/surefire-reports
+            portal/target/site/jacoco
+      - name: Fail when a test failed
+        working-directory: portal
+        run: |
+          if grep -lE '<(failure|error)[ >]' target/surefire-reports/TEST-*.xml; then
+            echo "Some tests failed: see the portal-reports artifact."; exit 1
+          fi

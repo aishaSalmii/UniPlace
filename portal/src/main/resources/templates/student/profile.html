@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Profile')}"></head>
+<body>
+<header th:replace="~{fragments/layout :: nav}"></header>
+<main>
+    <div th:replace="~{fragments/layout :: flash}"></div>
+    <h1>Profile and documents</h1>
+    <div class="card">
+        <table>
+            <tr><th>Student number</th><td th:text="${student.studentNumber}">n</td></tr>
+            <tr><th>Program</th><td th:text="${student.program}">p</td></tr>
+            <tr><th>GPA</th><td th:text="${student.gpa}">g</td></tr>
+            <tr><th>Credits completed</th><td th:text="${student.creditsCompleted}">c</td></tr>
+            <tr><th>Academic standing</th><td th:text="${@fmt.label(student.standing)}">s</td></tr>
+            <tr><th>Prior internships</th><td th:text="${student.priorInternships}">0</td></tr>
+        </table>
+        <p class="muted">Academic data is maintained by the placement office.</p>
+    </div>
+    <form class="card" method="post" th:action="@{/student/profile}">
+        <h2>Contact and skills</h2>
+        <label for="fullName">Full name</label><input type="text" id="fullName" name="fullName" th:value="${student.fullName}" maxlength="120">
+        <label for="email">University e-mail</label><input type="email" id="email" name="email" th:value="${student.email}" maxlength="120">
+        <label for="skills">Skills (comma-separated)</label><input type="text" id="skills" name="skills" th:value="${skills}">
+        <div class="actions"><button type="submit">Save profile</button></div>
+    </form>
+    <div class="card">
+        <h2>Documents</h2>
+        <table>
+            <tr><th>Type</th><th>File</th><th>Size</th><th>Issue date</th><th>Uploaded</th></tr>
+            <tr th:each="d : ${documents}">
+                <td th:text="${@fmt.label(d.type)}">t</td>
+                <td><a th:href="@{/documents/{id}(id=${d.id})}" th:text="${d.originalName}">f</a></td>
+                <td th:text="|${d.sizeBytes / 1024} KB|">s</td>
+                <td th:text="${@fmt.date(d.issueDate)}">d</td>
+                <td th:text="${@fmt.dateTime(d.uploadedAt)}">d</td>
+            </tr>
+            <tr th:if="${#lists.isEmpty(documents)}"><td colspan="5" class="muted">No documents yet.</td></tr>
+        </table>
+        <form method="post" th:action="@{/student/documents}" enctype="multipart/form-data">
+            <div class="row">
+                <div><label for="type">Document type</label>
+                    <select id="type" name="type"><option value="CV">CV (PDF, at most 2 MB)</option>
+                        <option value="TRANSCRIPT">Transcript (PDF, at most 5 MB)</option></select></div>
+                <div><label for="file">File</label><input type="file" id="file" name="file" accept="application/pdf"></div>
+                <div><label for="issueDate">Issue date (transcripts only)</label><input type="date" id="issueDate" name="issueDate"></div>
+            </div>
+            <div class="actions"><button type="submit">Upload</button></div>
+        </form>
+    </div>
+</main>
+</body>
+</html>

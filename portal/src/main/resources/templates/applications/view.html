@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Application')}"></head>
+<body>
+<header th:replace="~{fragments/layout :: nav}"></header>
+<main th:with="role=${user.role.name()}, st=${app.state.name()}">
+    <div th:replace="~{fragments/layout :: flash}"></div>
+    <h1 th:text="|${app.posting.title} · ${app.student.fullName}|">Application</h1>
+
+    <div class="card">
+        <p><a th:href="@{/postings/{id}(id=${app.posting.id})}" th:text="${app.posting.company.name}">company</a> ·
+            <span class="badge" th:classappend="${#strings.toLowerCase(app.state)}" th:text="${@fmt.label(app.state)}">s</span></p>
+        <table>
+            <tr><th>Submitted</th><td th:text="${@fmt.dateTime(app.submittedAt)}">d</td></tr>
+            <tr><th>Match score</th><td th:text="${app.matchScore}">0</td></tr>
+            <tr th:if="${role != 'STUDENT'}"><th>Student</th>
+                <td th:text="|${app.student.fullName} · ${app.student.program} · GPA ${app.student.gpa} · ${app.student.creditsCompleted} credits|">s</td></tr>
+            <tr th:if="${app.overrideJustification}"><th>Shortlist override</th><td th:text="${app.overrideJustification}">j</td></tr>
+        </table>
+        <h2>Motivation letter</h2>
+        <p th:text="${app.letter}" style="white-space: pre-wrap">letter</p>
+    </div>
+
+    <div class="card" th:if="${!#lists.isEmpty(interviews)}">
+        <h2>Interviews</h2>
+        <table>
+            <tr><th>Date</th><th>Time</th><th>Location</th><th>Status</th><th></th></tr>
+            <tr th:each="i : ${interviews}">
+                <td th:text="${@fmt.date(i.start.toLocalDate())}">d</td>
+                <td th:text="|${@fmt.time(i.start)} to ${@fmt.time(i.end)}|">t</td>
+                <td th:text="${i.location}">l</td>
+                <td th:text="${i.cancelled ? 'Cancelled' : 'Scheduled'}">s</td>
+                <td><form class="inline" method="post" th:if="${role == 'RECRUITER' and !i.cancelled and st == 'INTERVIEW'}"
+                          th:action="@{/interviews/{id}/cancel(id=${i.id})}">
+                    <input type="hidden" name="applicationId" th:value="${app.id}">
+                    <button type="submit" class="secondary">Cancel</button></form></td>
+            </tr>
+        </table>
+        <form method="post" th:action="@{/applications/{id}/reschedule(id=${app.id})}"
+              th:if="${role == 'STUDENT' and st == 'INTERVIEW' and !app.rescheduleRequested}">
+            <label for="note">Need another time? Tell the recruiter (one request per application)</label>
+            <input type="text" id="note" name="note" maxlength="300">
+            <div class="actions"><button type="submit" class="secondary">Request reschedule</button></div>
+        </form>
+        <p class="muted" th:if="${app.rescheduleRequested}">A reschedule was requested.</p>
+    </div>
+
+    <div class="card" th:if="${offer != null}">
+        <h2>Offer</h2>
+        <table>
+            <tr><th>Status</th><td><span class="badge" th:classappend="${#strings.toLowerCase(offer.status)}" th:text="${@fmt.label(offer.status)}">s</span></td></tr>
+            <tr><th>Monthly allowance</th><td th:text="${@fmt.money(offer.monthlyAllowance)}">0</td></tr>
+            <tr><th>Dates</th><td th:text="|${@fmt.date(offer.startDate)} to ${@fmt.date(offer.endDate)}|">d</td></tr>
+            <tr><th>Weekly hours</th><td th:text="${offer.weeklyHours}">40</td></tr>
+            <tr><th>Issued</th><td th:text="${@fmt.dateTime(offer.issuedAt)}">d</td></tr>
+            <tr><th>Answer by</th><td th:text="${@fmt.dateTime(offer.respondBy)}">d</td></tr>
+        </table>
+        <div class="actions" th:if="${role == 'STUDENT' and offer.status.name() == 'PENDING'}">
+            <form class="inline" method="post" th:action="@{/offers/{id}/accept(id=${offer.id})}"><button type="submit" id="accept-offer">Accept offer</button></form>
+            <form class="inline" method="post" th:action="@{/offers/{id}/decline(id=${offer.id})}"
+                  data-confirm="Decline this offer? This cannot be undone."><button type="submit" class="secondary">Decline</button></form>
+        </div>
+        <div th:if="${offer.status.name() == 'ACCEPTED' and (role == 'STUDENT' or role == 'COORDINATOR')}">
+            <h2>Allowance statement</h2>
+            <table class="statement" th:if="${!#lists.isEmpty(lines)}">
+                <tr th:each="l : ${lines}"><td th:text="${l.label}">label</td><td th:text="|QAR ${l.amount}|">0</td></tr>
+            </table>
+            <p class="muted" th:if="${#lists.isEmpty(lines)}">The statement is not available yet.</p>
+            <p class="muted" th:if="${app.agreementReceivedOn}" th:text="|Placement agreement received on ${@fmt.date(app.agreementReceivedOn)}.|">a</p>
+            <div th:if="${role == 'COORDINATOR'}" class="actions">
+                <form method="post" th:action="@{/coordinator/applications/{id}/agreement(id=${app.id})}" class="inline">
+                    <label for="receivedOn">Placement agreement received on</label>
+                    <input type="date" id="receivedOn" name="receivedOn">
+                    <button type="submit">Record and recalculate</button>
+                </form>
+                <form method="post" th:action="@{/coordinator/offers/{id}/recalculate(id=${offer.id})}" class="inline">
+                    <input type="hidden" name="applicationId" th:value="${app.id}">
+                    <button type="submit" class="secondary">Recalculate</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="card" th:if="${role == 'STUDENT' and app.state.active}">
+        <form method="post" th:action="@{/applications/{id}/withdraw(id=${app.id})}">
+            <button type="submit" class="danger">Withdraw application</button>
+        </form>
+    </div>
+
+    <div th:if="${role == 'RECRUITER'}">
+        <div class="card" th:if="${st == 'SUBMITTED'}">
+            <h2>Review</h2>
+            <form method="post" th:action="@{/applications/{id}/shortlist(id=${app.id})}">
+                <label for="justification" th:text="|Justification (required when the score is below ${threshold})|">Justification</label>
+                <input type="text" id="justification" name="justification" maxlength="1000">
+                <div class="actions"><button type="submit">Shortlist</button></div>
+            </form>
+        </div>
+        <div class="card" th:if="${st == 'SHORTLISTED'}">
+            <h2>Schedule an interview</h2>
+            <form method="post" th:action="@{/applications/{id}/interview(id=${app.id})}">
+                <div class="row">
+                    <div><label for="date">Date</label><input type="date" id="date" name="date"></div>
+                    <div><label for="from">Start</label><input type="time" id="from" name="from"></div>
+                    <div><label for="to">End</label><input type="time" id="to" name="to"></div>
+                </div>
+                <label for="location">Location or meeting link</label><input type="text" id="location" name="location" maxlength="200">
+                <div class="actions"><button type="submit">Schedule</button></div>
+            </form>
+        </div>
+        <div class="card" th:if="${st == 'INTERVIEW' and offer == null}">
+            <h2>Issue an offer</h2>
+            <form method="post" th:action="@{/applications/{id}/offer(id=${app.id})}" th:object="${offerForm}">
+                <div class="row">
+                    <div><label>Monthly allowance (QAR)</label><input type="number" step="0.01" id="monthlyAllowance" th:field="*{monthlyAllowance}"></div>
+                    <div><label>Weekly hours</label><input type="number" id="weeklyHours" th:field="*{weeklyHours}"></div>
+                    <div><label for="startDate">Start</label><input type="text" id="startDate" th:field="*{startDate}"></div>
+                    <div><label for="endDate">End</label><input type="text" id="endDate" th:field="*{endDate}"></div>
+                </div>
+                <div class="actions"><button type="submit">Issue offer</button></div>
+            </form>
+        </div>
+        <div class="card" th:if="${app.state.active}">
+            <div class="actions">
+                <form class="inline" method="post" th:action="@{/applications/{id}/questions(id=${app.id})}">
+                    <button type="submit" class="secondary">Suggest interview questions</button></form>
+                <form class="inline" method="post" th:action="@{/applications/{id}/reject(id=${app.id})}">
+                    <button type="submit" class="danger">Reject</button></form>
+            </div>
+        </div>
+        <div class="card ai" th:if="${aiError}"><p th:text="${aiError}">e</p></div>
+        <div class="card ai" th:if="${questions}">
+            <h2>Suggested interview questions</h2>
+            <p class="muted" th:text="${questions.source}">s</p>
+            <ol><li th:each="q : ${questions.questions}" th:text="${q}">q</li></ol>
+        </div>
+    </div>
+</main>
+</body>
+</html>

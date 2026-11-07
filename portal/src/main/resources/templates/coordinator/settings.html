@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Settings')}"></head>
+<body>
+<header th:replace="~{fragments/layout :: nav}"></header>
+<main>
+    <div th:replace="~{fragments/layout :: flash}"></div>
+    <h1>Settings</h1>
+    <form class="card" method="post" th:action="@{/coordinator/settings}">
+        <table>
+            <tr th:each="r : ${rows}">
+                <th style="width:45%"><label th:for="${r.key}" th:text="${r.label}">label</label></th>
+                <td>
+                    <select th:if="${r.key == 'ai.provider'}" th:id="${r.key}" th:name="${r.key}">
+                        <option th:each="p : ${providers}" th:value="${p.id}" th:text="${p.label}"
+                                th:attr="data-base-url=${p.baseUrl},data-model=${p.exampleModel}"
+                                th:selected="${p.id == r.value}">provider</option>
+                    </select>
+                    <input th:if="${!r.secret and r.key != 'ai.provider'}" type="text" th:id="${r.key}" th:name="${r.key}" th:value="${r.value}">
+                    <th:block th:if="${r.secret}">
+                        <input type="password" th:id="${r.key}" th:name="${r.key}" th:value="${r.value}" autocomplete="off"
+                               placeholder="Leave empty to keep the current value">
+                        <span class="muted" th:text="${r.hint}">hint</span>
+                        <label class="muted" style="font-weight:normal"><input type="checkbox" th:name="${r.key + '.clear'}"> Remove</label>
+                    </th:block>
+                </td>
+            </tr>
+        </table>
+        <div class="actions"><button type="submit">Save settings</button></div>
+    </form>
+    <form class="card" method="post" th:action="@{/coordinator/settings/test-ai}">
+        <p class="muted">Test connection sends one short request with the saved AI settings and shows the provider's
+            answer or its error. Save the settings first.</p>
+        <div class="actions"><button type="submit" class="secondary" id="test-ai">Test connection</button></div>
+    </form>
+    <div class="card muted">
+        <p>AI provider: choosing a provider fills in its base URL and an example model. Azure OpenAI uses the v1
+            endpoint of your resource and the deployment name as the model; Ollama runs locally and needs no key.
+            With no key (except Ollama) the simulated assistant is used.</p>
+    </div>
+    <script th:src="@{/js/settings.js}" defer></script>
+</main>
+</body>
+</html>

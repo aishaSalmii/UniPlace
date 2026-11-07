@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Candidate ranking')}"></head>
+<body>
+<header th:replace="~{fragments/layout :: nav}"></header>
+<main>
+    <div th:replace="~{fragments/layout :: flash}"></div>
+    <h1 th:text="|Candidate ranking: ${posting.title}|">Ranking</h1>
+    <p class="muted" th:text="|${posting.seatsLeft()} seats left · shortlist threshold ${threshold}|">info</p>
+    <table>
+        <tr><th>Rank</th><th>Candidate</th><th>Match score</th><th>GPA</th><th>Submitted</th><th>State</th><th></th></tr>
+        <tr th:each="c : ${candidates}">
+            <td th:text="${c.rank}">1</td>
+            <td><a th:href="@{/applications/{id}(id=${c.application.id})}" th:text="${c.application.student.fullName}">name</a></td>
+            <td th:text="${c.application.matchScore}">0</td>
+            <td th:text="${c.application.student.gpa}">0</td>
+            <td th:text="${@fmt.dateTime(c.application.submittedAt)}">d</td>
+            <td th:text="${@fmt.label(c.application.state)}">s</td>
+            <td><span class="badge open" th:if="${c.aboveCut}">Within seats</span></td>
+        </tr>
+        <tr th:if="${#lists.isEmpty(candidates)}"><td colspan="7" class="muted">No active candidates.</td></tr>
+    </table>
+</main>
+</body>
+</html>

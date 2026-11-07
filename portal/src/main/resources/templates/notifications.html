@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head(${all} ? 'Outbox' : 'Notifications')}"></head>
+<body>
+<header th:replace="~{fragments/layout :: nav}"></header>
+<main>
+    <h1 th:text="${all} ? 'Outbox' : 'Notifications'">Notifications</h1>
+    <table>
+        <tr><th>Date</th><th th:if="${all}">Recipient</th><th>Subject</th><th>Message</th></tr>
+        <tr th:each="n : ${page.content}">
+            <td th:text="${@fmt.dateTime(n.createdAt)}">d</td>
+            <td th:if="${all}" th:text="${n.recipient.username}">r</td>
+            <td th:text="${n.subject}">s</td>
+            <td th:text="${n.body}">b</td>
+        </tr>
+        <tr th:if="${page.empty}"><td colspan="4" class="muted">Nothing here yet.</td></tr>
+    </table>
+    <div th:replace="~{fragments/layout :: pager(${page}, ${all} ? '/coordinator/outbox' : '/notifications')}"></div>
+</main>
+</body>
+</html>

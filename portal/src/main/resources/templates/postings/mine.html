@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Our postings')}"></head>
+<body>
+<header th:replace="~{fragments/layout :: nav}"></header>
+<main>
+    <div th:replace="~{fragments/layout :: flash}"></div>
+    <h1>Our postings</h1>
+    <div class="card" th:if="${company == null}">
+        <p>Register your company before creating postings.</p>
+        <a class="button" th:href="@{/recruiter/company}">Register company</a>
+    </div>
+    <div th:if="${company != null}">
+        <p><a class="button" th:href="@{/recruiter/postings/new}">New posting</a></p>
+        <table>
+            <tr><th>Posting</th><th>Status</th><th>Deadline</th><th>Seats taken</th><th></th></tr>
+            <tr th:each="p : ${postings}">
+                <td><a th:href="@{/postings/{id}(id=${p.id})}" th:text="${p.title}">t</a></td>
+                <td><span class="badge" th:classappend="${#strings.toLowerCase(p.status)}" th:text="${@fmt.label(p.status)}">s</span></td>
+                <td th:text="${@fmt.date(p.deadline)}">d</td>
+                <td th:text="|${p.seatsTaken} / ${p.seats}|">0</td>
+                <td><a th:href="@{/recruiter/postings/{id}/candidates(id=${p.id})}">Ranking</a></td>
+            </tr>
+        </table>
+    </div>
+</main>
+</body>
+</html>
