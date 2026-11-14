@@ -1,0 +1,92 @@
+-------------------------------------------------------------------------------
+Test set: com.halcyon.uniplace.acceptance.StudentApplicationsAcceptanceTest
+-------------------------------------------------------------------------------
+Tests run: 16, Failures: 4, Errors: 2, Skipped: 0, Time elapsed: 6.919 s <<< FAILURE! -- in com.halcyon.uniplace.acceptance.StudentApplicationsAcceptanceTest
+com.halcyon.uniplace.acceptance.StudentApplicationsAcceptanceTest.A11_acceptedCannotBeWithdrawn -- Time elapsed: 0.230 s <<< FAILURE!
+org.opentest4j.AssertionFailedError: Expected com.halcyon.uniplace.service.BusinessRuleException to be thrown, but nothing was thrown.
+	at org.junit.jupiter.api.AssertionFailureBuilder.build(AssertionFailureBuilder.java:152)
+	at org.junit.jupiter.api.AssertThrows.assertThrows(AssertThrows.java:73)
+	at org.junit.jupiter.api.AssertThrows.assertThrows(AssertThrows.java:35)
+	at org.junit.jupiter.api.Assertions.assertThrows(Assertions.java:3115)
+	at com.halcyon.uniplace.acceptance.StudentApplicationsAcceptanceTest.A11_acceptedCannotBeWithdrawn(StudentApplicationsAcceptanceTest.java:91)
+	at java.base/java.lang.reflect.Method.invoke(Method.java:580)
+	at java.base/java.util.ArrayList.forEach(ArrayList.java:1596)
+	at java.base/java.util.ArrayList.forEach(ArrayList.java:1596)
+
+com.halcyon.uniplace.acceptance.StudentApplicationsAcceptanceTest.A05_withdrawnDoesNotCountAsActive -- Time elapsed: 0.014 s <<< FAILURE!
+org.opentest4j.AssertionFailedError: expected: <0> but was: <1>
+	at org.junit.jupiter.api.AssertionFailureBuilder.build(AssertionFailureBuilder.java:151)
+	at org.junit.jupiter.api.AssertionFailureBuilder.buildAndThrow(AssertionFailureBuilder.java:132)
+	at org.junit.jupiter.api.AssertEquals.failNotEqual(AssertEquals.java:197)
+	at org.junit.jupiter.api.AssertEquals.assertEquals(AssertEquals.java:166)
+	at org.junit.jupiter.api.AssertEquals.assertEquals(AssertEquals.java:161)
+	at org.junit.jupiter.api.Assertions.assertEquals(Assertions.java:632)
+	at com.halcyon.uniplace.acceptance.StudentApplicationsAcceptanceTest.A05_withdrawnDoesNotCountAsActive(StudentApplicationsAcceptanceTest.java:60)
+	at java.base/java.lang.reflect.Method.invoke(Method.java:580)
+	at java.base/java.util.ArrayList.forEach(ArrayList.java:1596)
+	at java.base/java.util.ArrayList.forEach(ArrayList.java:1596)
+
+com.halcyon.uniplace.acceptance.StudentApplicationsAcceptanceTest.A12_suspendedCompanyPreventsShortlisting -- Time elapsed: 0.021 s <<< FAILURE!
+org.opentest4j.AssertionFailedError: Expected com.halcyon.uniplace.service.BusinessRuleException to be thrown, but nothing was thrown.
+	at org.junit.jupiter.api.AssertionFailureBuilder.build(AssertionFailureBuilder.java:152)
+	at org.junit.jupiter.api.AssertThrows.assertThrows(AssertThrows.java:73)
+	at org.junit.jupiter.api.AssertThrows.assertThrows(AssertThrows.java:35)
+	at org.junit.jupiter.api.Assertions.assertThrows(Assertions.java:3115)
+	at com.halcyon.uniplace.acceptance.StudentApplicationsAcceptanceTest.A12_suspendedCompanyPreventsShortlisting(StudentApplicationsAcceptanceTest.java:99)
+	at java.base/java.lang.reflect.Method.invoke(Method.java:580)
+	at java.base/java.util.ArrayList.forEach(ArrayList.java:1596)
+	at java.base/java.util.ArrayList.forEach(ArrayList.java:1596)
+
+com.halcyon.uniplace.acceptance.StudentApplicationsAcceptanceTest.A06_probationLimitIsTwo -- Time elapsed: 0.011 s <<< FAILURE!
+org.opentest4j.AssertionFailedError: expected: <2> but was: <5>
+	at org.junit.jupiter.api.AssertionFailureBuilder.build(AssertionFailureBuilder.java:151)
+	at org.junit.jupiter.api.AssertionFailureBuilder.buildAndThrow(AssertionFailureBuilder.java:132)
+	at org.junit.jupiter.api.AssertEquals.failNotEqual(AssertEquals.java:197)
+	at org.junit.jupiter.api.AssertEquals.assertEquals(AssertEquals.java:150)
+	at org.junit.jupiter.api.AssertEquals.assertEquals(AssertEquals.java:145)
+	at org.junit.jupiter.api.Assertions.assertEquals(Assertions.java:531)
+	at com.halcyon.uniplace.acceptance.StudentApplicationsAcceptanceTest.A06_probationLimitIsTwo(StudentApplicationsAcceptanceTest.java:64)
+	at java.base/java.lang.reflect.Method.invoke(Method.java:580)
+	at java.base/java.util.ArrayList.forEach(ArrayList.java:1596)
+	at java.base/java.util.ArrayList.forEach(ArrayList.java:1596)
+
+com.halcyon.uniplace.acceptance.StudentApplicationsAcceptanceTest.A07_reapplyAfterRejectedIsAllowed -- Time elapsed: 0.013 s <<< ERROR!
+com.halcyon.uniplace.service.BusinessRuleException: You already have an active application for this posting.
+	at com.halcyon.uniplace.service.ApplicationService.submit(ApplicationService.java:155)
+	at java.base/jdk.internal.reflect.DirectMethodHandleAccessor.invoke(DirectMethodHandleAccessor.java:103)
+	at java.base/java.lang.reflect.Method.invoke(Method.java:580)
+	at org.springframework.aop.support.AopUtils.invokeJoinpointUsingReflection(AopUtils.java:355)
+	at org.springframework.aop.framework.ReflectiveMethodInvocation.invokeJoinpoint(ReflectiveMethodInvocation.java:196)
+	at org.springframework.aop.framework.ReflectiveMethodInvocation.proceed(ReflectiveMethodInvocation.java:163)
+	at org.springframework.aop.framework.CglibAopProxy$CglibMethodInvocation.proceed(CglibAopProxy.java:768)
+	at org.springframework.transaction.interceptor.TransactionAspectSupport.invokeWithinTransaction(TransactionAspectSupport.java:379)
+	at org.springframework.transaction.interceptor.TransactionInterceptor.invoke(TransactionInterceptor.java:119)
+	at org.springframework.aop.framework.ReflectiveMethodInvocation.proceed(ReflectiveMethodInvocation.java:184)
+	at org.springframework.aop.framework.CglibAopProxy$CglibMethodInvocation.proceed(CglibAopProxy.java:768)
+	at org.springframework.aop.framework.CglibAopProxy$DynamicAdvisedInterceptor.intercept(CglibAopProxy.java:720)
+	at com.halcyon.uniplace.service.ApplicationService$$SpringCGLIB$$0.submit(<generated>)
+	at com.halcyon.uniplace.acceptance.StudentApplicationsAcceptanceTest.A07_reapplyAfterRejectedIsAllowed(StudentApplicationsAcceptanceTest.java:68)
+	at java.base/java.lang.reflect.Method.invoke(Method.java:580)
+	at java.base/java.util.ArrayList.forEach(ArrayList.java:1596)
+	at java.base/java.util.ArrayList.forEach(ArrayList.java:1596)
+
+com.halcyon.uniplace.acceptance.StudentApplicationsAcceptanceTest.A10_scoreExactlyThresholdNeedsNoOverride -- Time elapsed: 0.011 s <<< ERROR!
+com.halcyon.uniplace.service.BusinessRuleException: The match score 60 is below the shortlist threshold 60. Give a justification to shortlist it anyway.
+	at com.halcyon.uniplace.service.ApplicationService.shortlist(ApplicationService.java:191)
+	at java.base/jdk.internal.reflect.DirectMethodHandleAccessor.invoke(DirectMethodHandleAccessor.java:103)
+	at java.base/java.lang.reflect.Method.invoke(Method.java:580)
+	at org.springframework.aop.support.AopUtils.invokeJoinpointUsingReflection(AopUtils.java:355)
+	at org.springframework.aop.framework.ReflectiveMethodInvocation.invokeJoinpoint(ReflectiveMethodInvocation.java:196)
+	at org.springframework.aop.framework.ReflectiveMethodInvocation.proceed(ReflectiveMethodInvocation.java:163)
+	at org.springframework.aop.framework.CglibAopProxy$CglibMethodInvocation.proceed(CglibAopProxy.java:768)
+	at org.springframework.transaction.interceptor.TransactionAspectSupport.invokeWithinTransaction(TransactionAspectSupport.java:379)
+	at org.springframework.transaction.interceptor.TransactionInterceptor.invoke(TransactionInterceptor.java:119)
+	at org.springframework.aop.framework.ReflectiveMethodInvocation.proceed(ReflectiveMethodInvocation.java:184)
+	at org.springframework.aop.framework.CglibAopProxy$CglibMethodInvocation.proceed(CglibAopProxy.java:768)
+	at org.springframework.aop.framework.CglibAopProxy$DynamicAdvisedInterceptor.intercept(CglibAopProxy.java:720)
+	at com.halcyon.uniplace.service.ApplicationService$$SpringCGLIB$$0.shortlist(<generated>)
+	at com.halcyon.uniplace.acceptance.StudentApplicationsAcceptanceTest.A10_scoreExactlyThresholdNeedsNoOverride(StudentApplicationsAcceptanceTest.java:85)
+	at java.base/java.lang.reflect.Method.invoke(Method.java:580)
+	at java.base/java.util.ArrayList.forEach(ArrayList.java:1596)
+	at java.base/java.util.ArrayList.forEach(ArrayList.java:1596)
+
