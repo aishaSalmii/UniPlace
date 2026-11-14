@@ -1,0 +1,299 @@
+[
+  {
+    "endpoint": "/eligibility",
+    "request": {
+      "gpa": 3,
+      "creditsCompleted": 60,
+      "standing": "GOOD",
+      "priorInternships": 0,
+      "minGpa": 2,
+      "minCredits": 45,
+      "asOf": "2026-11-12",
+      "documents": [
+        {
+          "type": "CV",
+          "sizeBytes": 100000,
+          "mimeType": "application/pdf"
+        },
+        {
+          "type": "TRANSCRIPT",
+          "sizeBytes": 200000,
+          "mimeType": "application/pdf",
+          "issueDate": "2026-10-13"
+        }
+      ]
+    },
+    "status": 200,
+    "response": {
+      "eligible": true,
+      "reasons": []
+    }
+  },
+  {
+    "endpoint": "/eligibility",
+    "request": {
+      "gpa": 2,
+      "creditsCompleted": 60,
+      "standing": "GOOD",
+      "priorInternships": 0,
+      "minGpa": 2,
+      "minCredits": 45,
+      "asOf": "2026-11-12",
+      "documents": [
+        {
+          "type": "CV",
+          "sizeBytes": 100000,
+          "mimeType": "application/pdf"
+        },
+        {
+          "type": "TRANSCRIPT",
+          "sizeBytes": 200000,
+          "mimeType": "application/pdf",
+          "issueDate": "2026-10-13"
+        }
+      ]
+    },
+    "status": 200,
+    "response": {
+      "eligible": false,
+      "reasons": [
+        "GPA 2 is below the minimum 2"
+      ]
+    }
+  },
+  {
+    "endpoint": "/eligibility",
+    "request": {
+      "gpa": 3,
+      "creditsCompleted": 60,
+      "standing": "GOOD",
+      "priorInternships": 0,
+      "minGpa": 2,
+      "minCredits": 45,
+      "asOf": "2026-11-12",
+      "documents": [
+        {
+          "type": "CV",
+          "sizeBytes": 100000,
+          "mimeType": "application/pdf"
+        },
+        {
+          "type": "TRANSCRIPT",
+          "sizeBytes": 200000,
+          "mimeType": "application/pdf",
+          "issueDate": "2026-05-17"
+        }
+      ]
+    },
+    "status": 200,
+    "response": {
+      "eligible": false,
+      "reasons": [
+        "Transcript issued on 2026-05-17 is not valid on 2026-11-12"
+      ]
+    }
+  },
+  {
+    "endpoint": "/eligibility",
+    "request": {
+      "gpa": 3,
+      "creditsCompleted": 60,
+      "standing": "GOOD",
+      "priorInternships": 0,
+      "minGpa": 2,
+      "minCredits": 45,
+      "asOf": "2026-11-12",
+      "documents": [
+        {
+          "type": "CV",
+          "sizeBytes": 100000,
+          "mimeType": "application/pdf"
+        },
+        {
+          "type": "TRANSCRIPT",
+          "sizeBytes": 200000,
+          "mimeType": "application/pdf",
+          "issueDate": "2026-05-16"
+        }
+      ]
+    },
+    "status": 200,
+    "response": {
+      "eligible": false,
+      "reasons": [
+        "Transcript issued on 2026-05-16 is not valid on 2026-11-12"
+      ]
+    }
+  },
+  {
+    "endpoint": "/eligibility",
+    "request": {
+      "gpa": 1,
+      "creditsCompleted": 1,
+      "standing": "GOOD",
+      "priorInternships": 0,
+      "minGpa": 2,
+      "minCredits": 45,
+      "asOf": "2026-11-12",
+      "documents": []
+    },
+    "status": 200,
+    "response": {
+      "eligible": false,
+      "reasons": [
+        "GPA 1 is below the minimum 2",
+        "Credits completed 1 are below the minimum 45",
+        "CV is missing",
+        "Transcript is missing"
+      ]
+    }
+  },
+  {
+    "endpoint": "/eligibility",
+    "request": {
+      "gpa": 4.01,
+      "creditsCompleted": 60,
+      "standing": "GOOD",
+      "priorInternships": 0,
+      "minGpa": 2,
+      "minCredits": 45,
+      "asOf": "2026-11-12",
+      "documents": [
+        {
+          "type": "CV",
+          "sizeBytes": 100000,
+          "mimeType": "application/pdf"
+        },
+        {
+          "type": "TRANSCRIPT",
+          "sizeBytes": 200000,
+          "mimeType": "application/pdf",
+          "issueDate": "2026-10-13"
+        }
+      ]
+    },
+    "status": 200,
+    "response": {
+      "eligible": true,
+      "reasons": []
+    }
+  },
+  {
+    "endpoint": "/match",
+    "request": {
+      "studentSkills": [
+        " java "
+      ],
+      "requiredSkills": [
+        "JAVA"
+      ],
+      "niceToHaveSkills": [
+        "Unmatched"
+      ]
+    },
+    "status": 200,
+    "response": {
+      "score": 0,
+      "matchedRequired": [],
+      "missingRequired": [
+        "JAVA"
+      ],
+      "matchedNiceToHave": []
+    }
+  },
+  {
+    "endpoint": "/match",
+    "request": {
+      "studentSkills": [
+        "Java"
+      ],
+      "requiredSkills": [
+        "Java"
+      ],
+      "niceToHaveSkills": []
+    },
+    "status": 200,
+    "response": {
+      "score": 100,
+      "matchedRequired": [
+        "Java"
+      ],
+      "missingRequired": [],
+      "matchedNiceToHave": []
+    }
+  },
+  {
+    "endpoint": "/match",
+    "request": {
+      "studentSkills": [
+        "A"
+      ],
+      "requiredSkills": [
+        "A",
+        "B",
+        "C",
+        "D"
+      ],
+      "niceToHaveSkills": [
+        "Unmatched"
+      ]
+    },
+    "status": 200,
+    "response": {
+      "score": 18,
+      "matchedRequired": [
+        "A"
+      ],
+      "missingRequired": [
+        "B",
+        "C",
+        "D"
+      ],
+      "matchedNiceToHave": []
+    }
+  },
+  {
+    "endpoint": "/rank",
+    "request": {
+      "seats": 1,
+      "candidates": [
+        {
+          "applicationId": 2,
+          "score": 80,
+          "gpa": 3,
+          "submittedAt": "2026-11-12T10:00:00+03:00"
+        },
+        {
+          "applicationId": 1,
+          "score": 80,
+          "gpa": 3,
+          "submittedAt": "2026-11-12T09:00:00+03:00"
+        }
+      ]
+    },
+    "status": 200,
+    "response": {
+      "ranked": [
+        1,
+        2
+      ],
+      "aboveCut": [
+        1,
+        2
+      ]
+    }
+  },
+  {
+    "endpoint": "/rank",
+    "request": {
+      "seats": 0,
+      "candidates": []
+    },
+    "status": 400,
+    "response": {
+      "error": "validation",
+      "field": "seats",
+      "message": "must be between 1 and 1000"
+    }
+  }
+]
