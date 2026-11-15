@@ -65,7 +65,7 @@ These are black-box HTTP API checks in tests/acceptance/test_application_engine.
 | E04 | STU-04; APP-04 | Transcript invalid on day 181 | Eligible result false | Passed | — |
 | E05 | APP-04; /eligibility | GPA, credits and two missing document failures yield at least 4 reasons | Ineligible with at least 4 reasons | Passed | — |
 | E06 | REL-02; EligibilityRequest domain | GPA 4.01 returns HTTP 400 naming gpa | Returned HTTP 200; field assertion not reached | Failed | [#13](https://github.com/aishaSalmii/UniPlace/issues/13) |
-| E07 | /match skill normalization; APP-04 | Student skill ' java ' matches required 'JAVA'; score 70 with unmatched nonempty nice list | Score 0 | Failed | Not reported yet |
+| E07 | /match skill normalization; APP-04 | Student skill ' java ' matches required 'JAVA'; score 70 with unmatched nonempty nice list | Score 0 | Failed | [#14](https://github.com/aishaSalmii/UniPlace/issues/14) |
 | E08 | /match empty optional contribution; APP-04 | All required skills matched and no nice skills gives score 70 | Score 100 | Failed | Not reported yet |
 | E09 | /match rounding | Required contribution 17.5 rounds up to 18; nonempty unmatched nice list contributes 0 | Score 18 | Passed | — |
 | E10 | APP-09; /rank | Ranking [1,2], aboveCut [1] with one seat | Ranking assertion passed; aboveCut was [1,2] | Failed | Not reported yet |
