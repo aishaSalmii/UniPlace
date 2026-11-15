@@ -24,9 +24,22 @@ they were not compilation or startup failures.
 
 | Issue | Test | Finding |
 | --- | --- | --- |
-| #4 | E02 | Engine rejects GPA equal to the minimum |
-| #5 | A05 | Withdrawn applications count as active |
-| #6 | A06 | Probation limit is 5 instead of 2 |
+| #4 | E02 | GPA equal to the minimum incorrectly rejected |
+| #5 | A05 | Withdrawn applications counted as active |
+| #6 | A06 | Probation application limit returned as 5 instead of 2 |
+| #7 | A07 | Reapplication after rejection refused |
+| #8 | A10 | Score equal to shortlist threshold requires an override |
+| #9 | A11 | Withdrawal of an accepted application not refused |
+| #10 | A12 | Suspended-company shortlisting not refused |
+| #11 | E03 | Transcript rejected on its 180th valid day |
+| #13 | E06 | GPA above 4.00 returns HTTP 200 instead of 400 |
+| #14 | E07 | Skill normalization does not follow the contract |
+| #15 | E08 | Empty nice-to-have list incorrectly adds points |
+| #16 | E10 | Seat cutoff includes more candidates than seats |
+
+All 12 unsuccessful checks from the current automated runs have
+been reported. Reports remain subject to review and deduplication.
+Manual and non-functional checks are still pending.
 
 ## Remaining findings to document
 
