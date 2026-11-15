@@ -61,7 +61,7 @@ These are black-box HTTP API checks in tests/acceptance/test_application_engine.
 | --- | --- | --- | --- | --- | --- |
 | E01 | APP-04; /eligibility | Valid baseline eligible with no reasons | Baseline eligible; reasons empty | Passed | — |
 | E02 | APP-04; /eligibility GPA at least minGpa | GPA 2 with minGpa 2 eligible | Ineligible; reason says GPA 2 is below minimum 2 | Failed | [#4](https://github.com/aishaSalmii/UniPlace/issues/4) |
-| E03 | STU-04; APP-04 | Transcript valid on day 180, issueDate = asOf minus 179 days | Eligible result false | Failed | Not reported yet |
+| E03 | STU-04; APP-04 | Transcript valid on day 180, issueDate = asOf minus 179 days | Eligible result false | Failed | [#11](https://github.com/aishaSalmii/UniPlace/issues/11) |
 | E04 | STU-04; APP-04 | Transcript invalid on day 181 | Eligible result false | Passed | — |
 | E05 | APP-04; /eligibility | GPA, credits and two missing document failures yield at least 4 reasons | Ineligible with at least 4 reasons | Passed | — |
 | E06 | REL-02; EligibilityRequest domain | GPA 4.01 returns HTTP 400 naming gpa | Returned HTTP 200; field assertion not reached | Failed | Not reported yet |
