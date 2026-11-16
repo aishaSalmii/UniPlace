@@ -1,11 +1,12 @@
 # **Student application test cases**
 
-Owner: Aisha. WB = white-box; BB = black-box. Results below reflect Aisha's execution on 14 November 2026, as shown in the shared terminal output and linked reports. Manual cases M04 and M06 were executed on 16 November 2026 and failed the checks documented below. M01, M02, M03 and M05 remain Not run. Posting-filter retention across pages remains untested. Passing integration tests verify their stated assertions with a mocked Engine; they do not establish real-provider or complete UI behavior.
+Owner: Aisha. WB = white-box; BB = black-box. Results below reflect Aisha's execution on 14 November 2026, as shown in the shared terminal output and linked reports. Manual cases M04 and M06 were executed on 16 November 2026 and failed the checks documented below. M02 was partially executed on 16 November 2026: the dashboard limit update failed (#30); Omar also displayed a PROBATION limit of 5 instead of 2 (#6). Clean GOOD and PROBATION boundary checks remain incomplete; Omar’s submission attempt was blocked by eligibility. Supplemental M01 integration checks were executed on 16 November 2026: retry after commit passed and overlapping submissions failed (#31). M01 browser/session/CSRF and real-network timeout checks remain untested. M03 and M05 remain Not run. Posting-filter retention across pages remains untested. Passing integration tests verify their stated assertions with a mocked Engine; they do not establish real-provider or complete UI behavior.
 
 ## **Execution details**
 
 - Automated execution date: 14 November 2026
-- Manual M04/M06 execution date: 16 November 2026
+
+- Manual M02/M04/M06 execution date: 16 November 2026
 
 - OS: macOS 26.6.2 (build 25G83)
 
@@ -21,6 +22,8 @@ Owner: Aisha. WB = white-box; BB = black-box. Results below reflect Aisha's exec
 | Engine API | 11 | 5 | 6 | 0 | 0 |
 | Total automated checks | 27 | 15 | 10 | 2 | 0 |
 
+Supplemental concurrency suite executed 16 November 2026: 2 checks, 1 passed, 1 failure, 0 errors, 0 skipped. Combined automated inventory across the separately executed suites: 29 checks, 16 passed, 11 failures, 2 errors, 0 skipped. This is not a single full-suite run. The original 27-check table above is unchanged. Do not use the supplemental run's coverage figures: JaCoCo reported class/execution-data mismatches.
+
 JUnit Error records an unexpected exception rather than an assertion failure. A07 and A10 raised business-rule exceptions for operations expected to succeed; they were not compiler or startup errors. A failed check is not automatically a separate defect.
 
 ### **Evidence**
@@ -35,7 +38,7 @@ JUnit Error records an unexpected exception rather than an assertion failure. A0
 
 - [Uploaded JUnit evidence at commit 52a0172](https://github.com/aishaSalmii/UniPlace/blob/52a0172/evidence/student-applications-junit-results.txt)
 
-Reported findings are linked below, including manual findings #20, #21 and #29. Keep existing screenshots and full raw evidence.
+Reported findings are linked below, including manual findings #20, #21, #29 and #30, and supplemental integration finding #31. Keep existing screenshots and full raw evidence.
 
 ## **Test case matrix**
 
@@ -57,8 +60,8 @@ Reported findings are linked below, including manual findings #20, #21 and #29. 
 | A14 | USR-05; SEC-05; APP-08 | Student applications | Integration | WB/ownership decision; Security | App belongs to different Student. | Other student attempts withdraw. | Distinct student IDs | ForbiddenException;no unauthorized mutation. | Unrelated student withdrawal raised ForbiddenException. The test does not separately assert persisted state afterwards. | Passed | StudentApplicationsAcceptanceTest.A14_otherStudentCannotWithdraw | — |
 | A15 | APP-10 | Student applications | Integration | WB/volume boundary; Functional | 21 historical rejected apps belonging to same student. | Request pages0 and1. | 21 records | 20 records then1; no loss. | Page 0 contained 20 records and page 1 contained 1. This does not establish response-time performance. | Passed | StudentApplicationsAcceptanceTest.A15_paginationReturns20ThenOne | — |
 | A16 | APP-04 | Student applications | Integration | WB/negative partition; Functional | Engine mock refuses with2 reasons. | Submit otherwise valid letter. | GPA reason and missingCV reason | Both reasons retained in exception;0 app records. UI display needs separate test. | Both mocked eligibility reasons retained in exception; no application saved. UI display not tested. | Passed | StudentApplicationsAcceptanceTest.A16_everyEligibilityReasonIsRetained | — |
-| M01 | APP-05 | Student applications | System | BB/concurrency and retry; Reliability | Eligible student, open posting, no duplicate; real sessions/CSRF. | Synchronize2 submissions of one logical form and retry after simulated timeout. | Same student/posting/letter | Exactly1 saved app; sensible repeat response. | Not recorded | Not run | Pending/manual | Pending |
-| M02 | APP-02; ADM-01 | Student applications | System | BB/BVA and decision table; Functional | Fresh open eligible postings;set default limits GOOD5 PROBATION2. | Test GOOD4→5→6 and PROBATION1→2→3;then change Settings and repeat. | Boundary counts per standing | Fifth/second allowed; sixth/third refused;Settings immediate. | Not recorded | Not run | Pending/manual | Pending |
+| M01 | APP-05 | Student applications | Integration (supplemental); planned system scope incomplete | WB/concurrency and retry; Reliability | Isolated H2 fixtures: eligible student, approved company, open posting and valid documents; Engine mocked. | M01a submit, discard successful response, then retry. M01b synchronize two service calls at mocked eligibility after duplicate checks and before insertion. | Same student, posting and 120-character letter | Exactly 1 persisted application; sensible repeat response. | M01a PASS: committed retry retained one SUBMITTED record and raised BusinessRuleException. M01b FAIL: both calls submitted; 2 records persisted instead of 1. | PARTIALLY EXECUTED — concurrency FAIL; browser/session/CSRF and real-network timeout behavior untested | StudentApplicationConcurrencyTest.M01a_retryAfterCommitKeepsOneApplication; M01b_overlappingSubmissionsKeepOneApplication; executed 16 November 2026 | #31; evidence/student-application-concurrency-results.txt and .xml; evidence commit 5b7c910 |
+| M02 | APP-02; ADM-01 | Student applications | System | BB/BVA and decision table; Functional | student.amal in GOOD standing; coordinator Settings initially GOOD=5, PROBATION=2. Full design requires clean eligible fixtures for both standings. | Design: test GOOD 4→5→6 and PROBATION 1→2→3, then change Settings and repeat. Executed subset: inspect states, submit Sustainability Reporting, attempt Field Operations, change GOOD 5→6, inspect dashboard and reopen Settings, restore GOOD=5. | Initially 3 active plus 1 Withdrawn; after successful submission 4 active plus 1 Withdrawn; saved GOOD=6, PROBATION=2. | Fifth/second active application allowed; sixth/third refused under default limits; configured limits take effect immediately. | Dashboard initially counted 4 despite 3 active (#5). Sustainability Reporting succeeded. Field Operations refused before and after Settings change; exact refusal cause unconfirmed. GOOD=6 persisted in Settings, but dashboard showed 5 of 5 (#30). Omar: PROBATION, one Submitted and one Rejected; dashboard showed 1 of 5 (#6). Field Operations refused as ineligible; 182-character letter retained. No second/third application permission established. Restored GOOD=5; PROBATION remained 2. | PARTIALLY EXECUTED — dashboard limit update FAIL; clean GOOD and PROBATION boundary/Settings checks incomplete | Manual, 16 November 2026 | #5 count discrepancy; #6 probation display; #30 dashboard limit mismatch; screenshots attached to #30 |
 | M03 | APP-10; PERF-01 | Student applications | System | BB/volume and timing; Performance | Seed plus1000 extra apps on recorded reference hardware; authenticated. | Sample at least100 application-list requests and calculate nearest-rank p95. | Page/filter combinations | p95<=2000ms;pages20;correct ownership. Not measured by A15. | Not recorded | Not run | Pending/manual | Pending |
 | M04 | APP-10; USA-07 | Student applications | System | BB/filter partition; Usability | Coordinator account; State and Company filtered results span 2 pages. | Apply each filter separately; click Next where available. | State=Submitted; Company=Doha Energy Partners; Posting id=8 | Correct filtered results and criteria retained across pages. | State: 33 results; Company: 22 results. Next clears either filter and displays 116 unfiltered results. Posting id 8 returns 3 matching results; no second page. | FAIL; posting-filter pagination retention untested | Manual, 16 November 2026 | #29; screenshots attached to issue |
 | M05 | APP-06; INT-04 | Student applications | Integration and system | BB/state transitions and WB paths; Functional | Isolated fixtures for each source state;correct role/company. | Attempt each allowed transition and forbidden transition, including direct requests;cancel interview. | All7 application states | Only allowed transitions;cancel INTERVIEW→SHORTLISTED;ACCEPTED final. | Not recorded | Not run | Pending/manual | Pending |
@@ -87,10 +90,11 @@ These are black-box HTTP API checks in tests/acceptance/test_application_engine.
 | Requirement | Test cases | Issues found | Execution and remaining scope |
 | --- | --- | --- | --- |
 | APP-01 | A01–A04, M06 | #20, #21 (USA-06, USA-01) | A01–A04 passed. M06 refused submission but displayed a generic error and cleared input after temporary DevTools bypass; FAIL for USA-01/USA-06. |
-| APP-02 | A05, A06, M02 | #5, #6 | A05/A06 failed; limit enforcement and immediate Settings changes M02 not run |
+| APP-02 | A05, A06, M02 | #5, #6, #30 | A05/A06 failed. M02 partially executed: manual withdrawn-count discrepancy reproduced; saved GOOD=6 but dashboard retained limit 5. Full GOOD/PROBATION boundary and enforcement checks incomplete; generic Field Operations refusal cause unconfirmed. |
+| ADM-01 | M02 | #30 | PARTIALLY EXECUTED: GOOD limit saved as 6 and persisted on reopening Settings; student dashboard retained 5 without restart. Display update FAIL. Exact submission-refusal cause unconfirmed; remaining Settings/enforcement checks incomplete. Baseline restored to GOOD=5, PROBATION=2. |
 | APP-03 | A07–A09 | #7 | A07 error; A08/A09 passed; no claim of concurrent idempotency |
 | APP-04 | A02, A13, A16, E01–E09 | #4, #13, #14, #15 | Mixed executed results; complete Portal display/integration paths not yet verified |
-| APP-05 | M01 | Pending | Concurrent/retried form submission not run |
+| APP-05 | M01 | #31 | Supplemental integration: retry after commit PASS; synchronized overlapping submissions FAIL (2 records, expected 1). Isolated H2, mocked Engine. Browser/session/CSRF and real-network timeout checks remain untested. |
 | APP-06 | A11, M05 | #9 | A11 failed; complete state/channel matrix M05 not run |
 | COM-02 | A12 | #10 | Suspended-company shortlist check failed; other channels not fully verified |
 | APP-07 | A10 | #8 | Equality test error; other threshold/override/audit paths need review |
@@ -105,5 +109,5 @@ These are black-box HTTP API checks in tests/acceptance/test_application_engine.
 | USA-01 / USA-06 | M06 | #21, #20 | FAIL: generic refusal message and loss of typed letter after temporary client-side bypass. |
 | USA-07 | M04 | #29 | FAIL: State and Company filters cleared on Next. Posting id 8 basic filtering passed; posting-filter pagination retention untested. |
 
-Requirement coverage here describes design and observed execution, not JaCoCo code coverage. A passed partial check does not establish that an entire requirement is satisfied. M01, M02, M03 and M05 remain Not run; retain the stated limitations for executed manual checks. Consolidate these reviewed cases with teammate cases in docs/test-cases.md before final submission.
+Requirement coverage here describes design and observed execution, not JaCoCo code coverage. A passed partial check does not establish that an entire requirement is satisfied. M01 and M02 are partially executed; M03 and M05 remain Not run. Retain all stated testing limitations. Consolidate these reviewed cases with teammate cases in docs/test-cases.md before final submission.
 
