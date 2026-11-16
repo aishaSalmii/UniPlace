@@ -89,3 +89,20 @@ These figures come from the combined CI suite, including vendor
 tests. They are not coverage attributable solely to Aisha's tests.
 
 Evidence: evidence/ci-run-43735551175-jacoco.xml
+
+### M06 — Invalid motivation letter: error message and input retention
+
+Executed manually on 16 November 2026 using student.amal and
+Sustainability Reporting Intern at Doha Energy Partners.
+
+The form disabled submission for a 99-character letter. The disabled
+attribute was temporarily removed using browser Developer Tools to
+test server-side handling; no project files were modified.
+
+The server refused submission but displayed a generic error and cleared
+the letter, resetting the counter to 0.
+
+- USA-01: FAIL — rejection reason is not specific. Issue #21.
+- USA-06: FAIL — typed input is lost after refusal. Issue #20.
+
+Evidence: screenshots attached to issues #20 and #21.
