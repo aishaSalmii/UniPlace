@@ -3,18 +3,23 @@
 ## Execution details
 
 - Tester: Aisha
-- Date: 14 November 2026
+- Original automated suites: 14 November 2026
+- Manual and supplemental automated checks: 16 November 2026
 - Branch: qa/student-application-tests
 - OS: macOS 26.6.2 (build 25G83)
 - Java: Oracle Java 21.0.12.1 LTS
 
 ## Automated test summary
 
-| Suite | Executed | Passed | Failures | Errors | Skipped |
-| --- | ---: | ---: | ---: | ---: | ---: |
-| Engine API | 11 | 5 | 6 | 0 | 0 |
-| Portal JUnit | 16 | 10 | 4 | 2 | 0 |
-| Total | 27 | 15 | 10 | 2 | 0 |
+| Suite | Execution date | Executed | Passed | Failures | Errors | Skipped |
+| --- | --- | ---: | ---: | ---: | ---: | ---: |
+| Portal acceptance JUnit | 14 Nov 2026 | 16 | 10 | 4 | 2 | 0 |
+| Engine API | 14 Nov 2026 | 11 | 5 | 6 | 0 | 0 |
+| Supplemental concurrency integration | 16 Nov 2026 | 2 | 1 | 1 | 0 | 0 |
+| Supplemental state-transition checks | 16 Nov 2026 | 58 | 55 | 3 | 0 | 0 |
+| Combined inventory of separate executions | 14–16 Nov 2026 | 87 | 71 | 14 | 2 | 0 |
+
+These totals combine separately executed suites, not one full-suite run. Parameterized invocations are counted as checks; they are not distinct requirements or defects. Manual checks and vendor CI tests are not added to these totals. The 14 failures and 2 errors are unsuccessful checks, not 16 distinct bugs. No fixes or successful retests are claimed.
 
 The two JUnit errors were business-rule exceptions during
 operations expected to succeed. They require defect analysis;
@@ -26,35 +31,23 @@ they were not compilation or startup failures.
 | --- | --- | --- |
 | #4 | E02 | GPA equal to the minimum incorrectly rejected |
 | #5 | A05 | Withdrawn applications counted as active |
-| #6 | A06 | Probation application limit returned as 5 instead of 2 |
+| #6 | A06; M02 | Probation limit returned as 5 instead of 2; Omar dashboard showed 1 of 5 with configured limit 2 |
 | #7 | A07 | Reapplication after rejection refused |
 | #8 | A10 | Score equal to shortlist threshold requires an override |
-| #9 | A11 | Withdrawal of an accepted application not refused |
+| #9 | A11; M05 | Accepted withdrawal not refused; supplemental checks confirmed ACCEPTED/REJECTED persisted as WITHDRAWN and repeated WITHDRAWN call was not refused |
 | #10 | A12 | Suspended-company shortlisting not refused |
 | #11 | E03 | Transcript rejected on its 180th valid day |
 | #13 | E06 | GPA above 4.00 returns HTTP 200 instead of 400 |
 | #14 | E07 | Skill normalization does not follow the contract |
 | #15 | E08 | Empty nice-to-have list incorrectly adds points |
 | #16 | E10 | Seat cutoff includes more candidates than seats |
+| #20 | M06 | Refused invalid-letter submission clears typed input after client-side restriction bypass |
+| #21 | M06 | Invalid-letter refusal gives a generic message without the rule/value |
+| #29 | M04 | Next drops State and Company application filters |
+| #30 | M02 | Saved GOOD limit of 6 persists in Settings but student dashboard retains 5; submission-refusal cause unconfirmed |
+| #31 | M01b | Synchronized overlapping service submissions persist 2 applications instead of 1 |
 
-All 12 unsuccessful checks from the current automated runs have
-been reported. Reports remain subject to review and deduplication.
-Manual and non-functional checks are still pending.
-
-## Remaining findings to document
-
-- E03: Transcript rejected on its 180th valid day.
-- E06: GPA above 4.00 accepted without a validation error.
-- E07: Skill case and surrounding spaces not normalized.
-- E08: Empty nice-to-have list incorrectly increases score.
-- E10: More candidates marked within seats than available seats.
-- A07: Reapplication after rejection refused.
-- A10: Score equal to shortlist threshold requires override.
-- A11: Accepted application can be withdrawn.
-- A12: Suspended company can shortlist an application.
-
-Failed checks are findings to review and report individually;
-the test count is not automatically the distinct defect count.
+The inventory contains 17 reported issue IDs associated with Aisha's checks, subject to team review and deduplication. Issue numbers are not a count of all repository issues. The three M05 failure invocations strengthen issue #9 rather than becoming three new defect reports. This document records observed findings; it does not assert current GitHub issue state or that defects have been fixed.
 
 ## Evidence
 
@@ -62,19 +55,28 @@ the test count is not automatically the distinct defect count.
 - evidence/application-engine-trace.json
 - evidence/student-applications-junit-results.txt
 - evidence/student-applications-junit-results.xml
+- evidence/student-application-concurrency-results.txt
+- evidence/student-application-concurrency-results.xml
+- evidence/student-application-state-results.txt
+- evidence/student-application-state-results.xml
 
-## Pending work
+## Remaining scope and review
 
-- Complete remaining defect reports and check for duplicates.
-- Update test-case execution statuses and issue links.
-- Update the AI usage log for retained testing assistance.
-- Complete pending manual and non-functional tests.
-- Run the full test suite and assess service-layer coverage.
-- Open the testing pull request and obtain teammate review.
+- M01: browser/session/CSRF and real-network timeout/retry behavior remain untested; two supplemental integration checks executed.
+- M02: clean GOOD and PROBATION submission-boundary enforcement and broader Settings checks remain incomplete; Omar's attempt was blocked by eligibility.
+- M03: performance test not run; pagination record counts do not establish response time.
+- M04: State and Company pagination retention failed; posting id 8 basic filtering passed, but its pagination retention remains untested.
+- M05: browser/API, full authorization and offer-service paths remain untested; 58 supplemental checks executed.
+- M06: invalid-length refusal message and input retention failed after temporary client-side bypass; these results do not describe every refusal path.
+- Draft PR #17 exists. Teammate review, shared-case consolidation and final report/presentation preparation remain outstanding.
+- AI assistance is recorded in docs/ai-usage-log.md; team review of these records remains necessary.
+- A historical full Portal CI run and its coverage are recorded below. No fresh full-suite execution including the later M01/M05 classes is claimed here.
 
-## CI coverage
+## Historical full Portal CI run and coverage
 
-Source: GitHub Actions run 43735551175.
+Source: [GitHub Actions run 43735551175](https://github.com/aishaSalmii/UniPlace/actions/runs/43735551175).
+
+That run executed 163 Portal tests: 157 passed, 4 failures, 2 errors, 0 skipped. The unsuccessful cases were A05, A06, A07, A10, A11 and A12. It preceded the supplemental concurrency and state-transition classes and is not the current full-suite total.
 
 | Scope | Missed lines | Total lines | Covered lines | Line coverage |
 | --- | ---: | ---: | ---: | ---: |
@@ -126,7 +128,7 @@ http://127.0.0.1:8080/coordinator/applications?page=1
 Result: FAIL for State filter retention. Issue #29.
 Evidence: before-and-after screenshots attached to issue #29.
 
-Company and Posting id filter checks remain pending.
+Company results and the Posting id check are recorded below; only posting-filter pagination retention remains untested.
 
 Additional M04 checks:
 - Company filtering: Doha Energy Partners returned 22 applications.

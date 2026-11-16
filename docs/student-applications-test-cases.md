@@ -1,10 +1,11 @@
 # **Student application test cases**
 
-Owner: Aisha. WB = white-box; BB = black-box. Results below reflect Aisha's execution on 14 November 2026, as shown in the shared terminal output and linked reports. Manual cases M04 and M06 were executed on 16 November 2026 and failed the checks documented below. M02 was partially executed on 16 November 2026: the dashboard limit update failed (#30); Omar also displayed a PROBATION limit of 5 instead of 2 (#6). Clean GOOD and PROBATION boundary checks remain incomplete; Omar’s submission attempt was blocked by eligibility. Supplemental M01 integration checks were executed on 16 November 2026: retry after commit passed and overlapping submissions failed (#31). M01 browser/session/CSRF and real-network timeout checks remain untested. M03 and M05 remain Not run. Posting-filter retention across pages remains untested. Passing integration tests verify their stated assertions with a mocked Engine; they do not establish real-provider or complete UI behavior.
+Owner: Aisha. WB = white-box; BB = black-box. Results below reflect Aisha's execution on 14 November 2026, as shown in the shared terminal output and linked reports. Manual cases M04 and M06 were executed on 16 November 2026 and failed the checks documented below. M02 was partially executed on 16 November 2026: the dashboard limit update failed (#30); Omar also displayed a PROBATION limit of 5 instead of 2 (#6). Clean GOOD and PROBATION boundary checks remain incomplete; Omar’s submission attempt was blocked by eligibility. Supplemental M01 integration checks were executed on 16 November 2026: retry after commit passed and overlapping submissions failed (#31). M01 browser/session/CSRF and real-network timeout checks remain untested. Supplemental M05 state checks ran on 16 November 2026: 55 passed and 3 failed (#9). M05 system/channel scope remains incomplete. M03 remains Not run. Posting-filter retention across pages remains untested. Passing integration tests verify their stated assertions with a mocked Engine; they do not establish real-provider or complete UI behavior.
 
 ## **Execution details**
 
-- Automated execution date: 14 November 2026
+- Original automated suites: 14 November 2026
+- Supplemental M01/M05 automated checks: 16 November 2026
 
 - Manual M02/M04/M06 execution date: 16 November 2026
 
@@ -16,17 +17,26 @@ Owner: Aisha. WB = white-box; BB = black-box. Results below reflect Aisha's exec
 
 - Uploaded JUnit evidence commit: 52a0172
 
-| Suite | Executed | Passed | Failures | Errors | Skipped |
-| --- | ---: | ---: | ---: | ---: | ---: |
-| Portal JUnit | 16 | 10 | 4 | 2 | 0 |
-| Engine API | 11 | 5 | 6 | 0 | 0 |
-| Total automated checks | 27 | 15 | 10 | 2 | 0 |
+| Suite | Execution date | Executed | Passed | Failures | Errors | Skipped |
+| --- | --- | ---: | ---: | ---: | ---: | ---: |
+| Portal acceptance JUnit | 14 Nov 2026 | 16 | 10 | 4 | 2 | 0 |
+| Engine API | 14 Nov 2026 | 11 | 5 | 6 | 0 | 0 |
+| Supplemental concurrency integration | 16 Nov 2026 | 2 | 1 | 1 | 0 | 0 |
+| Supplemental state-transition checks | 16 Nov 2026 | 58 | 55 | 3 | 0 | 0 |
+| Combined inventory of separate executions | 14–16 Nov 2026 | 87 | 71 | 14 | 2 | 0 |
 
-Supplemental concurrency suite executed 16 November 2026: 2 checks, 1 passed, 1 failure, 0 errors, 0 skipped. Combined automated inventory across the separately executed suites: 29 checks, 16 passed, 11 failures, 2 errors, 0 skipped. This is not a single full-suite run. The original 27-check table above is unchanged. Do not use the supplemental run's coverage figures: JaCoCo reported class/execution-data mismatches.
+These totals combine separately executed suites, not one full-suite run. Parameterized invocations are counted as checks; they are not distinct requirements or defects. Manual checks and vendor CI tests are not added to these totals. The 14 failures and 2 errors are unsuccessful checks, not 16 distinct bugs. No fixes or successful retests are claimed.
+
+Do not use the concurrency run's coverage figures: JaCoCo reported class/execution-data mismatches.
 
 JUnit Error records an unexpected exception rather than an assertion failure. A07 and A10 raised business-rule exceptions for operations expected to succeed; they were not compiler or startup errors. A failed check is not automatically a separate defect.
 
 ### **Evidence**
+
+- [Concurrency text report](../evidence/student-application-concurrency-results.txt)
+- [Concurrency XML report](../evidence/student-application-concurrency-results.xml)
+- [State-transition text report](../evidence/student-application-state-results.txt)
+- [State-transition XML report](../evidence/student-application-state-results.xml)
 
 - [JUnit text report](../evidence/student-applications-junit-results.txt)
 
@@ -64,7 +74,7 @@ Reported findings are linked below, including manual findings #20, #21, #29 and 
 | M02 | APP-02; ADM-01 | Student applications | System | BB/BVA and decision table; Functional | student.amal in GOOD standing; coordinator Settings initially GOOD=5, PROBATION=2. Full design requires clean eligible fixtures for both standings. | Design: test GOOD 4→5→6 and PROBATION 1→2→3, then change Settings and repeat. Executed subset: inspect states, submit Sustainability Reporting, attempt Field Operations, change GOOD 5→6, inspect dashboard and reopen Settings, restore GOOD=5. | Initially 3 active plus 1 Withdrawn; after successful submission 4 active plus 1 Withdrawn; saved GOOD=6, PROBATION=2. | Fifth/second active application allowed; sixth/third refused under default limits; configured limits take effect immediately. | Dashboard initially counted 4 despite 3 active (#5). Sustainability Reporting succeeded. Field Operations refused before and after Settings change; exact refusal cause unconfirmed. GOOD=6 persisted in Settings, but dashboard showed 5 of 5 (#30). Omar: PROBATION, one Submitted and one Rejected; dashboard showed 1 of 5 (#6). Field Operations refused as ineligible; 182-character letter retained. No second/third application permission established. Restored GOOD=5; PROBATION remained 2. | PARTIALLY EXECUTED — dashboard limit update FAIL; clean GOOD and PROBATION boundary/Settings checks incomplete | Manual, 16 November 2026 | #5 count discrepancy; #6 probation display; #30 dashboard limit mismatch; screenshots attached to #30 |
 | M03 | APP-10; PERF-01 | Student applications | System | BB/volume and timing; Performance | Seed plus1000 extra apps on recorded reference hardware; authenticated. | Sample at least100 application-list requests and calculate nearest-rank p95. | Page/filter combinations | p95<=2000ms;pages20;correct ownership. Not measured by A15. | Not recorded | Not run | Pending/manual | Pending |
 | M04 | APP-10; USA-07 | Student applications | System | BB/filter partition; Usability | Coordinator account; State and Company filtered results span 2 pages. | Apply each filter separately; click Next where available. | State=Submitted; Company=Doha Energy Partners; Posting id=8 | Correct filtered results and criteria retained across pages. | State: 33 results; Company: 22 results. Next clears either filter and displays 116 unfiltered results. Posting id 8 returns 3 matching results; no second page. | FAIL; posting-filter pagination retention untested | Manual, 16 November 2026 | #29; screenshots attached to issue |
-| M05 | APP-06; INT-04 | Student applications | Integration and system | BB/state transitions and WB paths; Functional | Isolated fixtures for each source state;correct role/company. | Attempt each allowed transition and forbidden transition, including direct requests;cancel interview. | All7 application states | Only allowed transitions;cancel INTERVIEW→SHORTLISTED;ACCEPTED final. | Not recorded | Not run | Pending/manual | Pending |
+| M05 | APP-06; APP-08; INT-04 | Student applications | Unit/state-machine and service integration (supplemental); system scope incomplete | WB/state-pair matrix and service-path checks; Functional | Isolated H2 fixtures, owning student/recruiter, approved company; mocked Engine slot validation. | Check 49 state pairs; attempt withdrawal from each of 7 states; cancel an interview and retry cancellation; attempt cancellation after OFFERED. | All 7 application states; valid future slot | APP-06 state pairs enforced; allowed withdrawals succeed; forbidden withdrawals refused without mutation; cancellation returns INTERVIEW to SHORTLISTED; repeated/post-offer cancellation refused. | 58 checks: 55 passed, 3 failed. All 49 state-machine pairs, 4 permitted withdrawals and 2 cancellation checks passed. ACCEPTED and REJECTED changed to WITHDRAWN; repeated WITHDRAWN withdrawal lacked refusal. | PARTIALLY EXECUTED — withdrawal enforcement FAIL; browser/API, complete authorization and offer-service paths untested | StudentApplicationStateTransitionsTest; executed 16 November 2026 | #9; evidence/student-application-state-results.txt and .xml; commit 9cf30b9 |
 | M06 | USA-01; USA-06; APP-01 | Student applications | System | BB/negative validation; Usability | student.amal; open Sustainability Reporting Intern posting, id 8; valid session. | Enter 99 characters; temporarily remove disabled from Submit using DevTools; submit and inspect message and input. | 99 characters | Specific rule/value explained; typed content retained. | Submission refused with generic error; letter cleared and counter reset to 0. Client-side restriction temporarily bypassed; no project files modified. | FAIL for USA-01 and USA-06 | Manual, 16 November 2026 | #21 generic message; #20 input loss; screenshots attached to issues |
 
 ## **Supplemental real Engine checks**
@@ -95,10 +105,11 @@ These are black-box HTTP API checks in tests/acceptance/test_application_engine.
 | APP-03 | A07–A09 | #7 | A07 error; A08/A09 passed; no claim of concurrent idempotency |
 | APP-04 | A02, A13, A16, E01–E09 | #4, #13, #14, #15 | Mixed executed results; complete Portal display/integration paths not yet verified |
 | APP-05 | M01 | #31 | Supplemental integration: retry after commit PASS; synchronized overlapping submissions FAIL (2 records, expected 1). Isolated H2, mocked Engine. Browser/session/CSRF and real-network timeout checks remain untested. |
-| APP-06 | A11, M05 | #9 | A11 failed; complete state/channel matrix M05 not run |
+| APP-06 | A11, M05 | #9 | A11 failed. M05: all 49 state-machine pairs passed; service withdrawal bypassed restrictions for ACCEPTED, REJECTED and WITHDRAWN. Two cancellation checks passed. Full channel/authorization/offer-service matrix remains incomplete. |
+| INT-04 | M05 | — | M05 cancellation returned INTERVIEW to SHORTLISTED and marked the interview cancelled; repeat cancellation and cancellation after OFFERED refused. Rescheduling, UI/API and wider authorization checks are not established by these two checks. |
 | COM-02 | A12 | #10 | Suspended-company shortlist check failed; other channels not fully verified |
 | APP-07 | A10 | #8 | Equality test error; other threshold/override/audit paths need review |
-| APP-08 | A11, A14 | #9 | Accepted withdrawal failed; unauthorized-student refusal passed |
+| APP-08 | A11, A14, M05 | #9 | M05 confirmed ACCEPTED and REJECTED persisted as WITHDRAWN; repeated WITHDRAWN call was not refused. Four permitted withdrawals passed. A14 unauthorized-student refusal passed; wider channel matrix incomplete. |
 | APP-09 | E10 | #16 | Ranking order passed for fixture but seat cutoff failed; broader ranking datasets pending |
 | APP-10 | A15, M03, M04 | #29 | A15 record-count pagination passed. M04 FAIL: State and Company filters lost on Next. Posting id 8 basic filtering passed; posting-filter pagination retention untested. Ownership matrix and M03 performance checks remain incomplete. |
 | STU-04 | E03, E04 | #11 | Day 180 failed; day 181 passed; upload/type/size domains not fully checked here |
@@ -109,5 +120,5 @@ These are black-box HTTP API checks in tests/acceptance/test_application_engine.
 | USA-01 / USA-06 | M06 | #21, #20 | FAIL: generic refusal message and loss of typed letter after temporary client-side bypass. |
 | USA-07 | M04 | #29 | FAIL: State and Company filters cleared on Next. Posting id 8 basic filtering passed; posting-filter pagination retention untested. |
 
-Requirement coverage here describes design and observed execution, not JaCoCo code coverage. A passed partial check does not establish that an entire requirement is satisfied. M01 and M02 are partially executed; M03 and M05 remain Not run. Retain all stated testing limitations. Consolidate these reviewed cases with teammate cases in docs/test-cases.md before final submission.
+Requirement coverage here describes design and observed execution, not JaCoCo code coverage. A passed partial check does not establish that an entire requirement is satisfied. M01 and M02 are partially executed; Supplemental M05 state checks ran on 16 November 2026: 55 passed and 3 failed (#9). M05 system/channel scope remains incomplete. M03 remains Not run. Retain all stated testing limitations. Consolidate these reviewed cases with teammate cases in docs/test-cases.md before final submission.
 
