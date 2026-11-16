@@ -106,3 +106,34 @@ the letter, resetting the counter to 0.
 - USA-06: FAIL — typed input is lost after refusal. Issue #20.
 
 Evidence: screenshots attached to issues #20 and #21.
+
+### M04 — State filter retention during pagination
+
+Executed manually on 16 November 2026 as coordinator.
+
+Before clicking Next: State was Submitted, with 33 applications
+across 2 pages.
+
+After clicking Next: State reset to Any state, mixed states appeared,
+and the total changed to 116 applications across 6 pages.
+
+Before:
+http://127.0.0.1:8080/coordinator/applications?state=SUBMITTED&companyId=&postingId=
+
+After:
+http://127.0.0.1:8080/coordinator/applications?page=1
+
+Result: FAIL for State filter retention. Issue #29.
+Evidence: before-and-after screenshots attached to issue #29.
+
+Company and Posting id filter checks remain pending.
+
+Additional M04 checks:
+- Company filtering: Doha Energy Partners returned 22 applications.
+  Clicking Next cleared the company filter and displayed 116 applications
+  from multiple companies. FAIL; additional evidence attached to #29.
+- Posting id 8: returned 3 Sustainability Reporting Intern applications.
+  Basic filtering PASS. Pagination retention not tested because the
+  results fit on one page.
+
+M04 overall: FAIL due to State and Company filter loss during pagination.

@@ -1,12 +1,18 @@
-# Student application test cases
-Owner: Aisha. WB = white-box; BB = black-box. Results below reflect Aisha's execution on 14 November 2026, as shown in the shared terminal output and linked reports. Manual cases remain Not run. Passing integration tests verify their stated assertions with a mocked Engine; they do not establish real-provider or complete UI behavior.
+# **Student application test cases**
 
-## Execution details
+Owner: Aisha. WB = white-box; BB = black-box. Results below reflect Aisha's execution on 14 November 2026, as shown in the shared terminal output and linked reports. Manual cases M04 and M06 were executed on 16 November 2026 and failed the checks documented below. M01, M02, M03 and M05 remain Not run. Posting-filter retention across pages remains untested. Passing integration tests verify their stated assertions with a mocked Engine; they do not establish real-provider or complete UI behavior.
 
-- Date: 14 November 2026
+## **Execution details**
+
+- Automated execution date: 14 November 2026
+- Manual M04/M06 execution date: 16 November 2026
+
 - OS: macOS 26.6.2 (build 25G83)
+
 - Java: Oracle Java 21.0.12.1 LTS
+
 - Branch: qa/student-application-tests
+
 - Uploaded JUnit evidence commit: 52a0172
 
 | Suite | Executed | Passed | Failures | Errors | Skipped |
@@ -17,17 +23,22 @@ Owner: Aisha. WB = white-box; BB = black-box. Results below reflect Aisha's exec
 
 JUnit Error records an unexpected exception rather than an assertion failure. A07 and A10 raised business-rule exceptions for operations expected to succeed; they were not compiler or startup errors. A failed check is not automatically a separate defect.
 
-### Evidence
+### **Evidence**
 
 - [JUnit text report](../evidence/student-applications-junit-results.txt)
+
 - [JUnit XML report](../evidence/student-applications-junit-results.xml)
+
 - [Engine text report](../evidence/application-engine-results.txt)
+
 - [Engine request and response trace](../evidence/application-engine-trace.json)
+
 - [Uploaded JUnit evidence at commit 52a0172](https://github.com/aishaSalmii/UniPlace/blob/52a0172/evidence/student-applications-junit-results.txt)
 
-Issue links below record the reported findings: #4 GPA equality, #5 active count, #6 probation limit. Other observed findings still need their own reviewed reports. Keep existing screenshots and full raw evidence.
+Reported findings are linked below, including manual findings #20, #21 and #29. Keep existing screenshots and full raw evidence.
 
-## Test case matrix
+## **Test case matrix**
+
 | Test case ID | Requirement | Module | Level | Technique and type | Preconditions | Steps | Test data | Expected result | Actual result | Status | Automated test | Issue |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | A01 | APP-01 | Student applications | Integration | WB/BVA; Functional | Default approved company, eligible GOOD student, open posting; Engine mocked eligible. | Submit 99 ASCII x characters. | x ×99 | BusinessRuleException;0 saved applications. | 99-character letter refused; zero applications saved. | Passed | StudentApplicationsAcceptanceTest.A01_letter99IsRefused | — |
@@ -49,11 +60,11 @@ Issue links below record the reported findings: #4 GPA equality, #5 active count
 | M01 | APP-05 | Student applications | System | BB/concurrency and retry; Reliability | Eligible student, open posting, no duplicate; real sessions/CSRF. | Synchronize2 submissions of one logical form and retry after simulated timeout. | Same student/posting/letter | Exactly1 saved app; sensible repeat response. | Not recorded | Not run | Pending/manual | Pending |
 | M02 | APP-02; ADM-01 | Student applications | System | BB/BVA and decision table; Functional | Fresh open eligible postings;set default limits GOOD5 PROBATION2. | Test GOOD4→5→6 and PROBATION1→2→3;then change Settings and repeat. | Boundary counts per standing | Fifth/second allowed; sixth/third refused;Settings immediate. | Not recorded | Not run | Pending/manual | Pending |
 | M03 | APP-10; PERF-01 | Student applications | System | BB/volume and timing; Performance | Seed plus1000 extra apps on recorded reference hardware; authenticated. | Sample at least100 application-list requests and calculate nearest-rank p95. | Page/filter combinations | p95<=2000ms;pages20;correct ownership. Not measured by A15. | Not recorded | Not run | Pending/manual | Pending |
-| M04 | APP-10; USA-07 | Student applications | System | BB/filter partition; Usability | Multiple states/postings/companies and more than1 page. | Apply role-appropriate filters and navigate pages. | State,posting,company | Correct filtered results and criteria retained. | Not recorded | Not run | Pending/manual | Pending |
+| M04 | APP-10; USA-07 | Student applications | System | BB/filter partition; Usability | Coordinator account; State and Company filtered results span 2 pages. | Apply each filter separately; click Next where available. | State=Submitted; Company=Doha Energy Partners; Posting id=8 | Correct filtered results and criteria retained across pages. | State: 33 results; Company: 22 results. Next clears either filter and displays 116 unfiltered results. Posting id 8 returns 3 matching results; no second page. | FAIL; posting-filter pagination retention untested | Manual, 16 November 2026 | #29; screenshots attached to issue |
 | M05 | APP-06; INT-04 | Student applications | Integration and system | BB/state transitions and WB paths; Functional | Isolated fixtures for each source state;correct role/company. | Attempt each allowed transition and forbidden transition, including direct requests;cancel interview. | All7 application states | Only allowed transitions;cancel INTERVIEW→SHORTLISTED;ACCEPTED final. | Not recorded | Not run | Pending/manual | Pending |
-| M06 | USA-01; USA-06; APP-01 | Student applications | System | BB/negative validation; Usability | Open application form,valid session. | Type invalid-length letter and submit. | 99 characters | Specific rule/value explained;typed content retained. | Not recorded | Not run | Pending/manual | Pending |
+| M06 | USA-01; USA-06; APP-01 | Student applications | System | BB/negative validation; Usability | student.amal; open Sustainability Reporting Intern posting, id 8; valid session. | Enter 99 characters; temporarily remove disabled from Submit using DevTools; submit and inspect message and input. | 99 characters | Specific rule/value explained; typed content retained. | Submission refused with generic error; letter cleared and counter reset to 0. Client-side restriction temporarily bypassed; no project files modified. | FAIL for USA-01 and USA-06 | Manual, 16 November 2026 | #21 generic message; #20 input loss; screenshots attached to issues |
 
-## Supplemental real Engine checks
+## **Supplemental real Engine checks**
 
 These are black-box HTTP API checks in tests/acceptance/test_application_engine.py. Each request is stateless and uses explicit fixture dates. Full payloads and responses are saved in evidence/application-engine-trace.json. Results below are from Aisha's execution, not merely the earlier preparation run.
 
@@ -71,27 +82,28 @@ These are black-box HTTP API checks in tests/acceptance/test_application_engine.
 | E10 | APP-09; /rank | Ranking [1,2], aboveCut [1] with one seat | Ranking assertion passed; aboveCut was [1,2] | Failed | [#16](https://github.com/aishaSalmii/UniPlace/issues/16) |
 | E11 | REL-02; /rank | Zero seats returns HTTP 400 naming seats | HTTP 400 with field seats | Passed | — |
 
-## Requirement to test traceability matrix
+## **Requirement to test traceability matrix**
 
 | Requirement | Test cases | Issues found | Execution and remaining scope |
 | --- | --- | --- | --- |
-| APP-01 | A01–A04, M06 | #20, #21 (USA-06, USA-01) | A01–A04 passed; M06 executed 16 Nov 2026: submission refused, but generic error shown and letter cleared after temporarily enabling the button in DevTools. M06 FAIL for USA-01/USA-06. || APP-02 | A05, A06, M02 | #5, #6 | A05/A06 failed; limit enforcement and immediate Settings changes M02 not run |
-| APP-03 | A07–A09 | A07 report pending | A07 error; A08/A09 passed; no claim of concurrent idempotency |
-| APP-04 | A02, A13, A16, E01–E09 | #4; other Engine findings pending | Mixed executed results; complete Portal display/integration paths not yet verified |
+| APP-01 | A01–A04, M06 | #20, #21 (USA-06, USA-01) | A01–A04 passed. M06 refused submission but displayed a generic error and cleared input after temporary DevTools bypass; FAIL for USA-01/USA-06. |
+| APP-02 | A05, A06, M02 | #5, #6 | A05/A06 failed; limit enforcement and immediate Settings changes M02 not run |
+| APP-03 | A07–A09 | #7 | A07 error; A08/A09 passed; no claim of concurrent idempotency |
+| APP-04 | A02, A13, A16, E01–E09 | #4, #13, #14, #15 | Mixed executed results; complete Portal display/integration paths not yet verified |
 | APP-05 | M01 | Pending | Concurrent/retried form submission not run |
-| APP-06 | A11, M05 | A11 report pending | A11 failed; complete state/channel matrix M05 not run |
-| COM-02 | A12 | Report pending | Suspended-company shortlist check failed; other channels not fully verified |
-| APP-07 | A10 | Report pending | Equality test error; other threshold/override/audit paths need review |
-| APP-08 | A11, A14 | A11 report pending | Accepted withdrawal failed; unauthorized-student refusal passed |
-| APP-09 | E10 | Report pending | Ranking order passed for fixture but seat cutoff failed; broader ranking datasets pending |
-| APP-10 | A15, M03, M04 | Pending | Record-count pagination passed; filters/ownership/performance matrix not complete |
-| STU-04 | E03, E04 | E03 report pending | Day 180 failed; day 181 passed; upload/type/size domains not fully checked here |
+| APP-06 | A11, M05 | #9 | A11 failed; complete state/channel matrix M05 not run |
+| COM-02 | A12 | #10 | Suspended-company shortlist check failed; other channels not fully verified |
+| APP-07 | A10 | #8 | Equality test error; other threshold/override/audit paths need review |
+| APP-08 | A11, A14 | #9 | Accepted withdrawal failed; unauthorized-student refusal passed |
+| APP-09 | E10 | #16 | Ranking order passed for fixture but seat cutoff failed; broader ranking datasets pending |
+| APP-10 | A15, M03, M04 | #29 | A15 record-count pagination passed. M04 FAIL: State and Company filters lost on Next. Posting id 8 basic filtering passed; posting-filter pagination retention untested. Ownership matrix and M03 performance checks remain incomplete. |
+| STU-04 | E03, E04 | #11 | Day 180 failed; day 181 passed; upload/type/size domains not fully checked here |
 | REL-01 | A13 | — | Mocked Engine-outage integration check passed; live outage path still pending |
-| REL-02 | E06, E11 | E06 report pending | GPA domain check failed; zero-seat validation passed; wider invalid input matrix pending |
+| REL-02 | E06, E11 | #13 | GPA domain check failed; zero-seat validation passed; wider invalid input matrix pending |
 | USR-05 / SEC-05 | A14 | — | Unauthorized withdrawal refused; complete record/channel matrix belongs in shared security testing |
 | PERF-01 | M03 | Pending | Not run; pagination count is not performance evidence |
-| USA-01 / USA-06 | M06 | Pending | Not run |
-| USA-07 | M04 | Pending | Not run |
+| USA-01 / USA-06 | M06 | #21, #20 | FAIL: generic refusal message and loss of typed letter after temporary client-side bypass. |
+| USA-07 | M04 | #29 | FAIL: State and Company filters cleared on Next. Posting id 8 basic filtering passed; posting-filter pagination retention untested. |
 
-Requirement coverage here describes design and observed execution, not JaCoCo code coverage. A passed partial check does not establish that an entire requirement is satisfied. Preserve manual cases as Not run until executed. Consolidate these reviewed cases with teammate cases in docs/test-cases.md before final submission.
+Requirement coverage here describes design and observed execution, not JaCoCo code coverage. A passed partial check does not establish that an entire requirement is satisfied. M01, M02, M03 and M05 remain Not run; retain the stated limitations for executed manual checks. Consolidate these reviewed cases with teammate cases in docs/test-cases.md before final submission.
 
