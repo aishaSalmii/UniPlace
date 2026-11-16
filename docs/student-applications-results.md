@@ -137,3 +137,61 @@ Additional M04 checks:
   results fit on one page.
 
 M04 overall: FAIL due to State and Company filter loss during pagination.
+
+### M02 — Application limits and Settings changes (partial execution)
+
+Executed manually on 16 November 2026 using student.amal and coordinator.
+
+- Amal initially had 3 active applications and 1 Withdrawn.
+  Dashboard displayed 4 of 5, reproducing the count discrepancy in #5.
+- Sustainability Reporting Intern submission succeeded, leaving
+  4 active applications and 1 Withdrawn.
+- Field Operations Intern submission was refused with a generic message.
+- Coordinator changed the GOOD limit from 5 to 6 and saved.
+- Without an application restart, Amal's dashboard still displayed 5 of 5.
+  Reopened Settings retained 6. Dashboard limit update: FAIL, issue #30.
+- Another Field Operations submission was refused. Its exact refusal
+  cause was not established.
+- GOOD limit restored to 5; PROBATION remained 2.
+
+Evidence: screenshots for the Settings mismatch attached to issue #30.
+
+M02 remains partially executed. Clean GOOD boundary checks and the
+PROBATION boundary/Settings-change checks remain incomplete. 
+
+#### M02 — Additional PROBATION checks
+
+Executed manually on 16 November 2026 as student.omar.
+
+- Profile: PROBATION, GPA 1.85, 60 completed credits.
+- Application list: one Submitted and one Rejected.
+- Dashboard displayed 1 of 5 despite the configured PROBATION limit of 2.
+  This reproduces the displayed-limit problem in issue #6.
+- Field Operations Intern submission returned “You are not eligible
+  for this posting.” The specific eligibility reason was not displayed.
+- The 182-character motivation letter remained after this refusal:
+  input retention passed for this particular eligibility-refusal path.
+- The submission-boundary check was blocked by eligibility. Permission
+  to create a second or third active application was not established.
+
+M02 remains partially executed. Evidence for the dashboard discrepancy
+is recorded in issue #6.
+
+### M01 — Supplemental concurrency and retry integration checks
+
+Executed 16 November 2026 using StudentApplicationConcurrencyTest.
+
+- M01a PASS: retry after a committed submission retained one application.
+- M01b FAIL: two overlapping submissions both succeeded and persisted
+  2 applications instead of 1. APP-05 violation, issue #31.
+- Total: 2 tests, 1 passed, 1 failure, 0 errors, 0 skipped.
+
+Scope: isolated H2 database with mocked Engine. Browser/session/CSRF
+and real-network timeout behavior remain untested.
+This run's coverage figures are not used because JaCoCo reported
+class/execution-data mismatches.
+
+Evidence:
+- evidence/student-application-concurrency-results.txt
+- evidence/student-application-concurrency-results.xml
+- Terminal screenshots attached to issue #31.
