@@ -64,7 +64,7 @@ The inventory contains 17 reported issue IDs associated with Aisha's checks, sub
 
 - M01: browser/session/CSRF and real-network timeout/retry behavior remain untested; two supplemental integration checks executed.
 - M02: clean GOOD and PROBATION submission-boundary enforcement and broader Settings checks remain incomplete; Omar's attempt was blocked by eligibility.
-- M03: performance test not run; pagination record counts do not establish response time.
+- M03: local 100-request timing workload passed (p95 16.572834 ms, 0 errors); reference-hardware, filters, ownership and browser/concurrency scope remain unverified. See M03 evidence below.
 - M04: State and Company pagination retention failed; posting id 8 basic filtering passed, but its pagination retention remains untested.
 - M05: browser/API, full authorization and offer-service paths remain untested; 58 supplemental checks executed.
 - M06: invalid-length refusal message and input retention failed after temporary client-side bypass; these results do not describe every refusal path.
@@ -222,3 +222,54 @@ remain untested.
 Evidence:
 - evidence/student-application-state-results.txt
 - evidence/student-application-state-results.xml
+
+## M03 — Local application-list performance (partial requirement evidence)
+
+Executed 16 November 2026 at approximately 23:27 Qatar time (20:27 UTC).
+Before generation: 117 applications. Built-in coordinator Tools added 1,000
+applications, 100 students, 20 postings and 1,000 notifications. After generation:
+1,117 applications across 56 pages. Existing records retained; no reset performed.
+
+Environment: Apple M1, 8 physical/8 logical cores, 8 GiB RAM; macOS 26.6.2;
+Oracle Java 21.0.12.1. Recorded repository HEAD: cd48b4050ffd636d0eccc4dcc0a9ee380ae57206.
+The tracked working tree was clean at measurement; the newly added runner was
+not yet committed. This identifies source context, not proof of the running JAR's build hash.
+
+Method: one authenticated coordinator; 8 warm-up requests excluded, then 100
+sequential GETs, 25 each to zero-based pages 0, 1, 27 and 55. Timing covers request
+start through full HTML response-body read over loopback. Login, HTML parsing,
+static assets and browser rendering excluded. Responses checked for HTTP 200,
+expected total and page number, 20 rows (17 on last page), seven cells per row,
+and no repeated application ID within a page. This does not prove every record's
+content or completeness across all 56 pages. Password/session cookies not saved.
+
+| Metric | Value |
+| --- | ---: |
+| Measured requests | 100 |
+| Invalid/error responses | 0 |
+| Mean HTTP response time | 11.943280 ms |
+| Median | 10.650813 ms |
+| p95 (nearest rank, 95th sorted observation) | 16.572834 ms |
+| Maximum | 44.216042 ms |
+| Comparison threshold | 2,000 ms |
+
+| Page (zero-based) | Samples | p95 (ms) |
+| --- | ---: | ---: |
+| 0 | 25 | 16.572834 |
+| 1 | 25 | 16.498708 |
+| 27 | 25 | 14.274250 |
+| 55 | 25 | 16.852542 |
+
+Verdict: PASS for this local, unfiltered sequential HTTP workload. M03/PERF-01
+remain PARTIALLY EXECUTED: the host was not constrained to the 4-core/8-GB reference;
+filtered lists, student/recruiter ownership, full browser rendering and concurrent
+users were not assessed. No full PERF-01 or PERF-03 compliance claim is made.
+These 100 timing samples are separate from the 87 functional automated-check inventory.
+No new defect is supported by these timings.
+
+Evidence directory: evidence/m03-20261116T202716440861Z/
+- requests.csv: raw observations; independently recalculated and matched summary.
+- summary.json: aggregate and per-page values.
+- environment-and-plan.json: hardware, source HEAD and measurement settings.
+Runner: tests/performance/measure_application_list.py.
+The 117 baseline includes prior manual test records; it is not an untouched seed-only database.
