@@ -194,4 +194,29 @@ class/execution-data mismatches.
 Evidence:
 - evidence/student-application-concurrency-results.txt
 - evidence/student-application-concurrency-results.xml
-- Terminal screenshots attached to issue #31.
+- Terminal screenshots attached to issue #31. 
+
+### M05 — Supplemental state-transition integration checks
+
+Executed 16 November 2026 using StudentApplicationStateTransitionsTest.
+58 checks: 55 passed, 3 failed, 0 errors, 0 skipped.
+
+Passed:
+- 49 state-machine contract checks.
+- 4 permitted-withdrawal checks.
+- 2 interview-cancellation checks.
+
+Failed:
+- ACCEPTED and REJECTED applications could be withdrawn; persisted
+  states changed to WITHDRAWN.
+- Repeated withdrawal from WITHDRAWN did not raise the required refusal.
+
+Additional evidence recorded in issue #9.
+
+Scope: isolated H2 fixtures with mocked Engine. M05 remains partially
+executed; browser/API, full authorization and offer-service paths
+remain untested.
+
+Evidence:
+- evidence/student-application-state-results.txt
+- evidence/student-application-state-results.xml
