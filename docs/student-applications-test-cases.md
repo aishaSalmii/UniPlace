@@ -75,8 +75,7 @@ These are black-box HTTP API checks in tests/acceptance/test_application_engine.
 
 | Requirement | Test cases | Issues found | Execution and remaining scope |
 | --- | --- | --- | --- |
-| APP-01 | A01–A04, M06 | — | A01–A04 passed; UI refusal/input retention M06 not run |
-| APP-02 | A05, A06, M02 | #5, #6 | A05/A06 failed; limit enforcement and immediate Settings changes M02 not run |
+| APP-01 | A01–A04, M06 | #20, #21 (USA-06, USA-01) | A01–A04 passed; M06 executed 16 Nov 2026: submission refused, but generic error shown and letter cleared after temporarily enabling the button in DevTools. M06 FAIL for USA-01/USA-06. || APP-02 | A05, A06, M02 | #5, #6 | A05/A06 failed; limit enforcement and immediate Settings changes M02 not run |
 | APP-03 | A07–A09 | A07 report pending | A07 error; A08/A09 passed; no claim of concurrent idempotency |
 | APP-04 | A02, A13, A16, E01–E09 | #4; other Engine findings pending | Mixed executed results; complete Portal display/integration paths not yet verified |
 | APP-05 | M01 | Pending | Concurrent/retried form submission not run |
