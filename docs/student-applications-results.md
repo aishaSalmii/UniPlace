@@ -71,3 +71,21 @@ the test count is not automatically the distinct defect count.
 - Complete pending manual and non-functional tests.
 - Run the full test suite and assess service-layer coverage.
 - Open the testing pull request and obtain teammate review.
+
+## CI coverage
+
+Source: GitHub Actions run 43735551175.
+
+| Scope | Missed lines | Total lines | Covered lines | Line coverage |
+| --- | ---: | ---: | ---: | ---: |
+| Service package | 283 | 1037 | 754 | 72.71% |
+| ApplicationService | 38 | 124 | 86 | 69.35% |
+
+The service package exceeds the MAINT-01 line-coverage threshold
+of 70%. This assesses only the coverage condition; the full
+suite still contains the six reported unsuccessful tests.
+
+These figures come from the combined CI suite, including vendor
+tests. They are not coverage attributable solely to Aisha's tests.
+
+Evidence: evidence/ci-run-43735551175-jacoco.xml
