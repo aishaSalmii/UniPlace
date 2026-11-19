@@ -1,0 +1,28 @@
+{
+  "time_utc": "2026-11-16T20:27:16.441551+00:00",
+  "platform": "macOS-26.6.2-arm64-arm-64bit-Mach-O",
+  "cpu": "Apple M1",
+  "physical_cores": "8",
+  "logical_cores": "8",
+  "memory_bytes": "8589934592",
+  "git_commit": "cd48b4050ffd636d0eccc4dcc0a9ee380ae57206",
+  "git_tracked_status": "",
+  "java_version": "java 21.0.12.1 2026-08-18 LTS\nJava(TM) SE Runtime Environment (build 21.0.12.1+1-LTS-4)\nJava HotSpot(TM) 64-Bit Server VM (build 21.0.12.1+1-LTS-4, mixed mode, sharing)",
+  "mode": "one authenticated coordinator, 100 sequential HTTP GETs; loopback client and server on same host",
+  "expected_total": 1117,
+  "page_size": 20,
+  "pages_zero_based": [
+    0,
+    1,
+    27,
+    55
+  ],
+  "warmups": 8,
+  "measured_requests": 100,
+  "timeout_seconds": 15,
+  "threshold_ms": 2000,
+  "percentile_method": "nearest rank: sorted[ceil(0.95*N)-1]",
+  "timing_scope": "request start through complete response-body read; excludes HTML parsing, login, static assets and browser rendering",
+  "reference_hardware": "requirement reference: 4 cores / 8 GB; this host is not constrained to that reference",
+  "scope_limitations": "No filters, student/recruiter ownership, concurrency or 50-user workload tested. This is local pagination timing, not complete PERF-01 compliance."
+}

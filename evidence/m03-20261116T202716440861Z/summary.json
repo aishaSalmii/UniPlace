@@ -1,0 +1,28 @@
+{
+  "samples": 100,
+  "invalid_or_error_responses": 0,
+  "mean_ms": 11.94327996,
+  "median_ms": 10.6508125,
+  "p95_ms": 16.572834,
+  "max_ms": 44.216042,
+  "local_measured_workload_verdict": "PASS",
+  "requirement_verdict": "PARTIAL EVIDENCE ONLY: actual hardware differs from reference; filters and ownership not assessed",
+  "per_page": {
+    "0": {
+      "samples": 25,
+      "p95_ms": 16.572834
+    },
+    "1": {
+      "samples": 25,
+      "p95_ms": 16.498708
+    },
+    "27": {
+      "samples": 25,
+      "p95_ms": 14.27425
+    },
+    "55": {
+      "samples": 25,
+      "p95_ms": 16.852542
+    }
+  }
+}

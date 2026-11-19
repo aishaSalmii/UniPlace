@@ -1,0 +1,77 @@
+test_E01_eligible_baseline (__main__.Contract.test_E01_eligible_baseline) ... ok
+test_E02_gpa_equal_minimum (__main__.Contract.test_E02_gpa_equal_minimum) ... FAIL
+test_E03_transcript_day180 (__main__.Contract.test_E03_transcript_day180) ... FAIL
+test_E04_transcript_day181 (__main__.Contract.test_E04_transcript_day181) ... ok
+test_E05_all_reasons (__main__.Contract.test_E05_all_reasons) ... ok
+test_E06_invalid_gpa (__main__.Contract.test_E06_invalid_gpa) ... FAIL
+test_E07_skill_normalization (__main__.Contract.test_E07_skill_normalization) ... FAIL
+test_E08_empty_nice_skills (__main__.Contract.test_E08_empty_nice_skills) ... FAIL
+test_E09_half_rounds_up (__main__.Contract.test_E09_half_rounds_up) ... ok
+test_E10_ranking_tiebreak (__main__.Contract.test_E10_ranking_tiebreak) ... FAIL
+test_E11_rank_zero_seats (__main__.Contract.test_E11_rank_zero_seats) ... ok
+
+======================================================================
+FAIL: test_E02_gpa_equal_minimum (__main__.Contract.test_E02_gpa_equal_minimum)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/aisha salmi/Downloads/uniplace/tests/acceptance/test_application_engine.py", line 26, in test_E02_gpa_equal_minimum
+    p=eligibility();p['gpa']=2;self.assertTrue(call('/eligibility',p)[1]['eligible'])
+                               ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: False is not true
+
+======================================================================
+FAIL: test_E03_transcript_day180 (__main__.Contract.test_E03_transcript_day180)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/aisha salmi/Downloads/uniplace/tests/acceptance/test_application_engine.py", line 28, in test_E03_transcript_day180
+    p=eligibility();p['documents'][1]['issueDate']=str(date.fromisoformat(p['asOf'])-timedelta(days=179));self.assertTrue(call('/eligibility',p)[1]['eligible'])
+                                                                                                          ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: False is not true
+
+======================================================================
+FAIL: test_E06_invalid_gpa (__main__.Contract.test_E06_invalid_gpa)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/aisha salmi/Downloads/uniplace/tests/acceptance/test_application_engine.py", line 34, in test_E06_invalid_gpa
+    p=eligibility();p['gpa']=4.01;s,r=call('/eligibility',p);self.assertEqual(s,400);self.assertEqual(r['field'],'gpa')
+                                                             ~~~~~~~~~~~~~~~~^^^^^^^
+AssertionError: 200 != 400
+
+======================================================================
+FAIL: test_E07_skill_normalization (__main__.Contract.test_E07_skill_normalization)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/aisha salmi/Downloads/uniplace/tests/acceptance/test_application_engine.py", line 36, in test_E07_skill_normalization
+    s,r=call('/match',dict(studentSkills=[' java '],requiredSkills=['JAVA'],niceToHaveSkills=['Unmatched']));self.assertEqual(s,200);self.assertEqual(r['score'],70)
+                                                                                                                                     ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^
+AssertionError: 0 != 70
+
+======================================================================
+FAIL: test_E08_empty_nice_skills (__main__.Contract.test_E08_empty_nice_skills)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/aisha salmi/Downloads/uniplace/tests/acceptance/test_application_engine.py", line 38, in test_E08_empty_nice_skills
+    self.assertEqual(call('/match',dict(studentSkills=['Java'],requiredSkills=['Java'],niceToHaveSkills=[]))[1]['score'],70)
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 100 != 70
+
+======================================================================
+FAIL: test_E10_ranking_tiebreak (__main__.Contract.test_E10_ranking_tiebreak)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/aisha salmi/Downloads/uniplace/tests/acceptance/test_application_engine.py", line 42, in test_E10_ranking_tiebreak
+    p=dict(seats=1,candidates=[dict(applicationId=2,score=80,gpa=3,submittedAt='2026-11-12T10:00:00+03:00'),dict(applicationId=1,score=80,gpa=3,submittedAt='2026-11-12T09:00:00+03:00')]);s,r=call('/rank',p);self.assertEqual(s,200);self.assertEqual(r['ranked'],[1,2]);self.assertEqual(r['aboveCut'],[1])
+                                                                                                                                                                                                                                                                           ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^
+AssertionError: Lists differ: [1, 2] != [1]
+
+First list contains 1 additional elements.
+First extra element 1:
+2
+
+- [1, 2]
++ [1]
+
+----------------------------------------------------------------------
+Ran 11 tests in 0.029s
+
+FAILED (failures=6)

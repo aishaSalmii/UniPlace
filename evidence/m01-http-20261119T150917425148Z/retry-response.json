@@ -1,0 +1,8 @@
+{
+  "label": "sequential-retry",
+  "start_utc": "2026-11-19T15:09:17.600667+00:00",
+  "status": 302,
+  "location": "http://127.0.0.1:8080/postings/8",
+  "error": null,
+  "elapsed_ms": 9.147541000857018
+}
