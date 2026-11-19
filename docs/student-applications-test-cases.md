@@ -102,6 +102,29 @@ The fictional qa.concurrent account initially had no applications. Two simultane
 
 These supplemental HTTP observations are recorded separately from the 87 checks in the suite inventory above. They do not represent a new defect in addition to #31.
 
+## M02 additional manual execution — 19 November 2026
+
+Requirements: APP-02, ADM-01, USA-01 and USA-06.
+
+Fixture: qa.limits, GOOD standing, GPA 3.50, 90 credits,
+zero prior internships, valid CV and recent transcript.
+Initially no applications; Settings GOOD=5, PROBATION=2.
+
+| Check | Observed result | Verdict |
+| --- | --- | --- |
+| Fourth to fifth active application | Generated Internship 16 submitted; five SUBMITTED records confirmed | PASS |
+| Sixth attempt with GOOD=5 | Refused; five records remained; generic message and letter cleared | Refusal observed; specific cause unconfirmed |
+| Change GOOD to 6 without restart | Value remained 6 after reopening Settings | Save persistence PASS |
+| Dashboard after changing GOOD to 6 | Displayed 5 of 5 instead of 5 of 6 | FAIL — #30 |
+| Retry sixth submission with GOOD=6 | Refused again; letter cleared | Cause unconfirmed |
+
+Settings restored to GOOD=5 and PROBATION=2.
+Evidence: screenshots attached to issue #30.
+Input loss and generic refusal also support existing #20 and #21.
+
+M02 remains partially executed: PROBATION boundaries and
+configured-limit submission enforcement remain unresolved.
+
 ## Supplemental real Engine checks
 
 These are black-box HTTP API checks in tests/acceptance/test_application_engine.py. Each request is stateless and uses explicit fixture dates. Full payloads and responses are saved in evidence/application-engine-trace.json. Results below are from Aisha's execution, not merely the earlier preparation run.

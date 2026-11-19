@@ -19,6 +19,8 @@ One entry per meaningful use.
 
 | 19 November 2026 | Aisha | ChatGPT; model not recorded | Prepare and revise M01 HTTP concurrency/retry script and update documentation | Generate simultaneous authenticated submissions and a sequential retry; interpret the HTTP 405 precheck and execution evidence | Revised script, reproduction comment and documentation updates | Ran the script locally; verified applications 1118 and 1119 in the UI; linked evidence to existing issue #31 | Rejected treating HTTP 405 as proof of CSRF protection or claiming actual timeout/browser double-click testing |
 
+| 19–20 November 2026 | Aisha | ChatGPT; model not recorded | Guide M02 boundary and Settings checks and document results | Plan an eligible test account, test the fifth/sixth submission and compare saved limits with the dashboard | Manual steps and documentation wording | Executed checks myself, verified five SUBMITTED records, confirmed saved GOOD=6 versus dashboard 5 of 5, and restored GOOD=5/PROBATION=2 | Did not claim the generic refusal proved its cause or that PROBATION boundaries were completed |
+
 ## Reflection
 
 AI helped clarify unfamiliar planning and GitHub steps.

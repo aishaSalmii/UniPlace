@@ -294,3 +294,26 @@ created two SUBMITTED applications: 1118 and 1119.
 
 These are supplemental HTTP checks, separate from the previously
 reported 87 automated checks.
+
+## M02 additional manual execution — 19 November 2026
+
+Fixture: qa.limits, student 20999002, GOOD standing, GPA 3.50,
+90 credits, no prior internships, valid CV and recent transcript.
+Initially no applications. Settings: GOOD=5, PROBATION=2.
+
+- Created five SUBMITTED applications to distinct postings.
+- The 4→5 boundary passed: Generated Internship 16 was accepted.
+- Attempting Generated Internship 26 as a sixth application was
+  refused; five records remained. The generic message did not
+  establish the specific refusal cause, and the letter was cleared.
+- Changed GOOD from 5 to 6 without restarting. Reopened Settings
+  confirmed 6 persisted, but the student dashboard showed 5 of 5.
+- Retrying the sixth submission was refused again; cause unconfirmed.
+- Existing issue #30: saved limit not reflected on the dashboard.
+- Additional observations support #20 (input loss) and #21
+  (generic refusal).
+- Restored GOOD=5 and PROBATION=2 after testing.
+
+M02 remains partially executed. PROBATION 1→2→3 boundaries and
+configured-limit submission enforcement remain unresolved.
+Screenshots are attached to issue #30.
