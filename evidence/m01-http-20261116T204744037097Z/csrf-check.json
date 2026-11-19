@@ -1,0 +1,8 @@
+{
+  "label": "missing-csrf",
+  "start_utc": "2026-11-16T20:47:44.038524+00:00",
+  "status": 405,
+  "location": null,
+  "error": null,
+  "elapsed_ms": 9.517665999737801
+}

@@ -1,0 +1,37 @@
+{
+  "missing_csrf_status": 405,
+  "missing_csrf_interpretation": "INCONCLUSIVE: missing-CSRF request returned 405 and created no application; cause unverified.",
+  "after_concurrent_ids": [
+    1118,
+    1119
+  ],
+  "after_concurrent_count": 2,
+  "concurrent_http_statuses": [
+    302,
+    302
+  ],
+  "concurrency_observation": "FAIL: duplicate applications persisted",
+  "after_retry_ids": [
+    1118,
+    1119
+  ],
+  "retry_added_record": false,
+  "retry_record_count_verdict": "PASS: retry created no new application",
+  "record_identity_checks": [
+    {
+      "application_id": 1118,
+      "detail_page_valid": true,
+      "expected_title_visible": true,
+      "test_name_visible": true
+    },
+    {
+      "application_id": 1119,
+      "detail_page_valid": true,
+      "expected_title_visible": true,
+      "test_name_visible": true
+    }
+  ],
+  "real_timeout_tested": false,
+  "browser_double_click_tested": false,
+  "evidence_directory": "evidence/m01-http-20261119T150917425148Z"
+}

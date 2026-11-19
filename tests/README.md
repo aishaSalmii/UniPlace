@@ -207,3 +207,47 @@ The implemented Student Applications scripts currently use
 Each contributor must update this document when adding a suite.
 Preserve existing instructions and distinguish planned tests
 from executed results.
+
+## Student Applications — M01 HTTP concurrency and retry
+
+Run from the repository root with Python 3 and the Portal and Engine running:
+
+```bash
+python3 tests/acceptance/check_submission_requests.py
+```
+
+### Setup
+
+Create the fictional student account through Coordinator → Students:
+
+- Username: qa.concurrent
+- Name: QA Concurrency Student
+- Student number: 20999001
+- Email: qa.concurrency@example.test
+- Program: BSc Information Systems
+- GPA: 3.50; credits: 90; prior internships: 0
+- Skills: Java, SQL, Spring, Excel, Safety, Writing
+- Upload a valid PDF CV and a recent PDF transcript.
+- Set a test password and enter it at the script's hidden prompt.
+
+The account must have no applications. Posting 8 must be OPEN and titled
+Sustainability Reporting Intern. Check its deadline and eligibility
+requirements before running.
+
+### Behavior and evidence
+
+The script sends two simultaneous authenticated submissions and then
+one sequential retry. It creates application records; run it once per
+empty fixture. Do not reset a shared working database to repeat it.
+
+Evidence is saved under evidence/m01-http-<timestamp>/.
+
+Execution on 19 November 2026:
+- Concurrent submissions: FAIL — applications 1118 and 1119 persisted.
+- Sequential retry: PASS — no additional application.
+- Existing defect: #31, requirements APP-03 and APP-05.
+- Evidence: evidence/m01-http-20261119T150917425148Z/
+
+Missing-CSRF HTTP 405 is inconclusive. Browser double-clicks and actual
+network timeouts are not tested. Inspect summary.json: this script does
+not use a nonzero exit code to signal an observed test failure.

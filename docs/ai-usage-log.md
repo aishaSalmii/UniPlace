@@ -17,6 +17,8 @@ One entry per meaningful use.
 
 | 16 November 2026 | Aisha | ChatGPT; model not recorded | Prepare and verify partial M03 performance measurement | Generate a coordinator-authenticated timing runner and interpret 100-request evidence | tests/performance/measure_application_list.py; M03 result and traceability text | Aisha generated 1,000 records once and ran locally; ChatGPT recalculated CSV mean/median/p95/max and checked 100 HTTP 200 valid rows against summary; p95 16.572834 ms | Did not count 100 timing samples as additional functional tests; did not claim reference-hardware, rendering, ownership, concurrent-user or full PERF-01 compliance; screenshot-only results replaced by CSV verification |
 
+| 19 November 2026 | Aisha | ChatGPT; model not recorded | Prepare and revise M01 HTTP concurrency/retry script and update documentation | Generate simultaneous authenticated submissions and a sequential retry; interpret the HTTP 405 precheck and execution evidence | Revised script, reproduction comment and documentation updates | Ran the script locally; verified applications 1118 and 1119 in the UI; linked evidence to existing issue #31 | Rejected treating HTTP 405 as proof of CSRF protection or claiming actual timeout/browser double-click testing |
+
 ## Reflection
 
 AI helped clarify unfamiliar planning and GitHub steps.

@@ -273,3 +273,24 @@ Evidence directory: evidence/m03-20261116T202716440861Z/
 - environment-and-plan.json: hardware, source HEAD and measurement settings.
 Runner: tests/performance/measure_application_list.py.
 The 117 baseline includes prior manual test records; it is not an untouched seed-only database.
+
+## M01 additional HTTP execution — 19 November 2026
+
+Command: `python3 tests/acceptance/check_submission_requests.py`
+
+Using the fictional qa.concurrent account with no existing applications,
+two simultaneous authenticated POST requests to /postings/8/apply
+created two SUBMITTED applications: 1118 and 1119.
+
+- Concurrent submission: FAIL — expected one application; two persisted.
+- Sequential retry: PASS — no additional application was created.
+- Both records matched the expected student and posting.
+- Existing defect: #31, violating APP-03 and APP-05.
+- Evidence: evidence/m01-http-20261119T150917425148Z/
+- The earlier run on 16 November stopped at the missing-CSRF precheck
+  with HTTP 405, before concurrent submission.
+- HTTP 405 does not establish successful CSRF protection.
+- Browser double-clicks and actual network timeouts remain untested.
+
+These are supplemental HTTP checks, separate from the previously
+reported 87 automated checks.

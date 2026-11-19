@@ -1,0 +1,9 @@
+{
+  "time_utc": "2026-11-19T15:09:17.425797+00:00",
+  "account": "qa.concurrent",
+  "posting_id": 8,
+  "posting_title": "Sustainability Reporting Intern",
+  "before_application_ids": [],
+  "method": "Two HTTP POSTs released together using copies of one authenticated session cookie and the same form CSRF token, followed by one sequential retry.",
+  "limitations": "No forced server-side synchronization. Not a browser double-click. No actual network timeout or packet loss. One request pair cannot prove absence of concurrency bugs. HTTP 405 without CSRF is inconclusive for CSRF protection."
+}

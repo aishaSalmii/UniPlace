@@ -1,0 +1,9 @@
+{
+  "time_utc": "2026-11-16T20:47:44.037707+00:00",
+  "account": "qa.concurrent",
+  "posting_id": 8,
+  "posting_title": "Sustainability Reporting Intern",
+  "before_application_ids": [],
+  "method": "Two HTTP POSTs released together using copies of one authenticated session cookie and same valid form CSRF token, followed by one sequential retry. No forced server-side synchronization.",
+  "limitations": "Not a browser double-click; no real timeout/packet loss induced. A successful retry after disregarding the earlier response is only a response-loss model. Single race schedule cannot prove absence of concurrency bugs."
+}
