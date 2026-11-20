@@ -18,8 +18,7 @@ Preconditions and steps: Create SUBMITTED application and attempt issue using va
 
 Expected result: SUBMITTED refused; INTERVIEW allowed and becomes OFFERED.
 
-Automation and execution: OFF02 checks forbidden transition; positive pending.
-
+Automation and execution: JUnit OffersAcceptanceTest O01 (INTERVIEW, positive) and O02 (SUBMITTED, negative).
 Execution results:
 
 - JUnit O01 (INTERVIEW), 15 Nov 2026: offer created as PENDING, application OFFERED. Status: **Pass**. Evidence: junit-OffersAcceptanceTest-2026-11-15.txt
@@ -33,7 +32,7 @@ Preconditions and steps: Use INTERVIEW app; offer posting allowance exactly, the
 
 Expected result: Exact allowed boundaries pass; excess allowance and out-of-range dates refused.
 
-Automation and execution: Manual pending.
+Automation and execution: JUnit O03 (allowance one cent above the posting). The other datasets are manual and not run yet.
 
 Execution results:
 
@@ -50,7 +49,7 @@ Preconditions and steps: Call responseDeadline for issued=12 Nov 2026 14:30 and 
 
 Expected result: 15 Nov 2026 14:30, preserving time.
 
-Automation and execution: OFF01.
+Automation and execution: JUnit O04.
 
 Execution results:
 
@@ -64,7 +63,7 @@ Preconditions and steps: Set response hours to 73; issue at 14:30.
 
 Expected result: Deadline is issue time +73 hours, with no truncation to full days.
 
-Automation and execution: Manual pending.
+Automation and execution: Manual; not run yet.
 
 Execution results:
 
@@ -78,7 +77,7 @@ Preconditions and steps: Construct pending offer whose respondBy is one hour bef
 
 Expected result: Acceptance refused even before scheduler runs.
 
-Automation and execution: OFF03.
+Automation and execution: JUnit O05.
 
 Execution results:
 
@@ -92,7 +91,7 @@ Preconditions and steps: One student has pending offered app and another SUBMITT
 
 Expected result: Accepted app ACCEPTED; other active app WITHDRAWN.
 
-Automation and execution: OFF04.
+Automation and execution: JUnit O06.
 
 Execution results:
 
@@ -106,7 +105,7 @@ Preconditions and steps: One-seat posting has offered app plus another student S
 
 Expected result: Posting FILLED; remaining active app REJECTED and notification generated.
 
-Automation and execution: OFF05 checks state; notification pending.
+Automation and execution: JUnit O07 (posting status and the other application's state). The notification check is manual and not run yet.
 
 Execution results:
 
@@ -121,7 +120,7 @@ Preconditions and steps: Prepare two pending offers for a single free seat. Use 
 
 Expected result: Exactly one succeeds, seatsTaken=1, no negative seatsLeft, loser receives explanation.
 
-Automation and execution: Manual pending.
+Automation and execution: Manual concurrency check; not run yet.
 
 Execution results:
 
@@ -135,7 +134,7 @@ Preconditions and steps: Use 1 Jan through 30 Jan inclusive, monthly 3000, no la
 
 Expected result: 29h total 3000; 30h total 3300.
 
-Automation and execution: E12 and E13.
+Automation and execution: Engine API tests/acceptance/test_engine.py E12 and E13.
 
 Execution results:
 
@@ -150,7 +149,7 @@ Preconditions and steps: Same 30-day duration, monthly 4900 and weeklyHours=31.
 
 Expected result: Monthly total capped at 5000; lines show -200 cap adjustment.
 
-Automation and execution: E16.
+Automation and execution: Engine API test_engine.py E16.
 
 Execution results:
 
@@ -164,7 +163,7 @@ Preconditions and steps: Use monthly 3000, 29h, duration 30 days; lateDays=0,1,8
 
 Expected result: Totals 3000,2850,2700,2400; penalty never exceeds 20%.
 
-Automation and execution: E12 E14 E15 E17.
+Automation and execution: Engine API test_engine.py E12, E14, E15 and E17.
 
 Execution results:
 
@@ -181,7 +180,7 @@ Preconditions and steps: Use 1 Jan to 31 Jan inclusive and 31 Jan to 28 Feb incl
 
 Expected result: Whole-calendar-month semantics follow OpenAPI, not every month treated as 30 days.
 
-Automation and execution: Manual pending.
+Automation and execution: Manual; not run yet.
 
 Execution results:
 
@@ -195,7 +194,7 @@ Preconditions and steps: Accept an offer. Open its allowance statement as owner,
 
 Expected result: Full lines only for authorized owner and Coordinator; unrelated users denied without disclosure.
 
-Automation and execution: HTTP02 tests general app disclosure; accepted statement matrix pending.
+Automation and execution: Manual role check; not run yet. JUnit O08 covers a related rule (an unrelated student cannot accept an offer), not the statement view.
 
 Execution results:
 
@@ -209,7 +208,7 @@ Preconditions and steps: Accepted placement; record agreement on start date then
 
 Expected result: No penalty on start; two started late weeks at +8 days; updated statement saved.
 
-Automation and execution: Manual pending.
+Automation and execution: Manual; not run yet.
 
 Execution results:
 
@@ -223,7 +222,7 @@ Preconditions and steps: After 5 warmups send 100 /allowance calls; also measure
 
 Expected result: Allowance has no explicit numeric SLA here; report distribution only. Eligibility/match p95<=200ms; rank p95<=500ms.
 
-Automation and execution: benchmark_engine.py provided for SLA endpoints, not executed; allowance timing pending.
+Automation and execution: Manual timing measurement; no script in this repository yet; not run.
 
 Execution results:
 
