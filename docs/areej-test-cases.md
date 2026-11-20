@@ -19,6 +19,7 @@ Preconditions and steps: Create SUBMITTED application and attempt issue using va
 Expected result: SUBMITTED refused; INTERVIEW allowed and becomes OFFERED.
 
 Automation and execution: JUnit OffersAcceptanceTest O01 (INTERVIEW, positive) and O02 (SUBMITTED, negative).
+
 Execution results:
 
 - JUnit O01 (INTERVIEW), 15 Nov 2026: offer created as PENDING, application OFFERED. Status: **Pass**. Evidence: junit-OffersAcceptanceTest-2026-11-15.txt
