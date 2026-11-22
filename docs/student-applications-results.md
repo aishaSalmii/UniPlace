@@ -45,9 +45,10 @@ they were not compilation or startup failures.
 | #21 | M06 | Invalid-letter refusal gives a generic message without the rule/value |
 | #29 | M04 | Next drops State and Company application filters |
 | #30 | M02 | Saved GOOD limit of 6 persists in Settings but student dashboard retains 5; submission-refusal cause unconfirmed |
-| #31 | M01b | Synchronized overlapping service submissions persist 2 applications instead of 1 |
+| #31 | M01b; M01 HTTP | Synchronized service submissions and concurrent HTTP submissions persist 2 applications instead of 1 |
+| #36 | Eligibility investigation, 22 November | Portal mapper uses Settings default minimum GPA instead of posting minimum; eligible GPA 1.80 student refused for a GPA 1.50 posting |
 
-The inventory contains 17 reported issue IDs associated with Aisha's checks, subject to team review and deduplication. Issue numbers are not a count of all repository issues. The three M05 failure invocations strengthen issue #9 rather than becoming three new defect reports. This document records observed findings; it does not assert current GitHub issue state or that defects have been fixed.
+The inventory contains 18 reported issue IDs associated with Aisha's checks, subject to team review and deduplication. Issue numbers are not a count of all repository issues. The three M05 failure invocations strengthen issue #9 rather than becoming three new defect reports. This document records observed findings; it does not assert current GitHub issue state or that defects have been fixed.
 
 ## Evidence
 
@@ -62,15 +63,15 @@ The inventory contains 17 reported issue IDs associated with Aisha's checks, sub
 
 ## Remaining scope and review
 
-- M01: browser/session/CSRF and real-network timeout/retry behavior remain untested; two supplemental integration checks executed.
-- M02: clean GOOD and PROBATION submission-boundary enforcement and broader Settings checks remain incomplete; Omar's attempt was blocked by eligibility.
+- M01: integration and authenticated concurrent HTTP checks reproduced #31; sequential retry passed. Browser double-clicks and actual network timeouts remain untested; missing-CSRF HTTP 405 is inconclusive.
+- M02: GOOD 4→5 passed on 19 November. PROBATION 1→2 passed and 2→3 failed (#6) on 22 November after the temporary workaround for #36. Default GPA restored to 2.00. GOOD sixth-attempt refusal cause and submission enforcement after increasing GOOD to 6 remain unresolved.
 - M03: local 100-request timing workload passed (p95 16.572834 ms, 0 errors); reference-hardware, filters, ownership and browser/concurrency scope remain unverified. See M03 evidence below.
 - M04: State and Company pagination retention failed; posting id 8 basic filtering passed, but its pagination retention remains untested.
 - M05: browser/API, full authorization and offer-service paths remain untested; 58 supplemental checks executed.
 - M06: invalid-length refusal message and input retention failed after temporary client-side bypass; these results do not describe every refusal path.
-- Draft PR #17 exists. Teammate review, shared-case consolidation and final report/presentation preparation remain outstanding.
+- PR #17 is ready for review; two reviews were pending at the last observed check. Teammate review, shared-case consolidation and final report/presentation preparation remain outstanding.
 - AI assistance is recorded in docs/ai-usage-log.md; team review of these records remains necessary.
-- A historical full Portal CI run and its coverage are recorded below. No fresh full-suite execution including the later M01/M05 classes is claimed here.
+- Latest verified full Portal CI at commit 278e123: 223 tests, 213 passed, 8 failures, 2 errors, 0 skipped. See the 22 November CI verification section. This run includes the supplemental M01/M05 classes. Historical totals are retained separately and overlap this run.
 
 ## Historical full Portal CI run and coverage
 
@@ -314,8 +315,9 @@ Initially no applications. Settings: GOOD=5, PROBATION=2.
   (generic refusal).
 - Restored GOOD=5 and PROBATION=2 after testing.
 
-M02 remains partially executed. PROBATION 1→2→3 boundaries and
-configured-limit submission enforcement remain unresolved.
+Historical status on 19 November: PROBATION boundaries were pending.
+They were subsequently completed on 22 November, as recorded below.
+GOOD configured-limit submission enforcement remains unresolved.
 Screenshots are attached to issue #30.
 
 ## PROBATION fixture and eligibility investigation — 22 November 2026
@@ -340,7 +342,9 @@ from Settings instead of the posting minimum. Reported as #36
 The probes used representative document metadata, not a capture
 of the Portal's outgoing request.
 
-PROBATION application-limit boundaries remain BLOCKED by eligibility.
+The initial PROBATION application-limit attempt was blocked by eligibility.
+Boundary testing subsequently completed using the temporary workaround;
+see the dated boundary results below. Default GPA was restored to 2.00.
 No production-code fix was made.
 
 ### PROBATION application boundary test — 22 November 2026

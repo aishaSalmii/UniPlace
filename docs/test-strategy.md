@@ -57,8 +57,10 @@ and white-box techniques.
 
 - JUnit and Spring Boot Test for Portal unit and integration tests.
 - JaCoCo for measuring service-layer line coverage.
-- Postman for Engine API exploration and automated assertions.
-- JMeter for performance and concurrent-user testing.
+- Python standard-library HTTP/unittest scripts for Aisha's executed Engine API assertions and HTTP submission checks; curl for controlled eligibility probes.
+- Postman remains a planned option for API exploration; its execution is not claimed in Aisha's evidence.
+- Python standard-library HTTP timing runner for the executed local application-list workload.
+- JMeter remains planned for broader concurrent-user performance testing; completion must be supported by team evidence.
 - Browser developer tools for inspecting requests and responses.
 - GitHub Issues for defects and GitHub Actions for automated tests.
 
@@ -74,7 +76,7 @@ contribute automation, and report defects for her assigned module.
 
 We will use these branches:
 
-- qa/student-applications
+- qa/student-application-tests
 - qa/offers-allowance
 - qa/users-security
 
@@ -98,5 +100,24 @@ API keys, credentials and portal/data will not be committed.
 | --- | --- | --- |
 | 13 November 2026 | Created the initial strategy and assigned three primary modules. | Establish responsibilities and prioritize testing risks. |
 
-We will add dated changes as testing progresses and explain
-the evidence or feedback behind each change.
+| 14 November 2026 | Executed Student Applications Portal integration and Engine API suites. | Establish reproducible results against application rules and the Engine contract. |
+| 16 November 2026 | Added synchronized concurrency and state-transition checks; executed pagination, input-retention and local HTTP timing checks. | Investigate race conditions and service paths beyond the original suite; record hardware and scope limitations. |
+| 19 November 2026 | Added authenticated concurrent HTTP submission checks and a clean GOOD fixture for limit tests. | Confirm duplicate persistence through HTTP and reduce ambiguity from existing application history. |
+| 22 November 2026 | Investigated eligibility mismatch (#36); temporarily lowered default GPA for isolated PROBATION boundary testing, then restored 2.00. | Separate eligibility failure from limit enforcement; 1→2 passed and 2→3 failed (#6). |
+| 22 November 2026 | Verified CI at commit 278e123: 223 Portal tests, 213 passed, 8 failures, 2 errors; service line coverage 72.90%. | Reconcile current suite totals and coverage with the uploaded reports; keep historical executions separate. |
+
+## Current execution limitations
+
+Student Applications retains partial scope: actual browser double-clicks and
+network timeouts, missing-CSRF interpretation, GOOD configured-limit submission
+enforcement, posting-filter retention across multiple pages, wider system and
+authorization paths, and reference-hardware/concurrent-user performance remain
+unverified. Local sequential HTTP timing does not establish full performance
+compliance. AI Assistant repeated evaluations and other modules require their
+own executed team evidence. Planned tools and checks are not completed results.
+
+The 22 November service-package line coverage target is met, but the
+all-tests-pass condition is not met. Coverage includes vendor tests and must
+not be attributed solely to Aisha's acceptance tests. PR #17 had two pending
+reviews at the last check; shared case consolidation and final reporting remain
+outstanding. No production-code fixes are claimed.
