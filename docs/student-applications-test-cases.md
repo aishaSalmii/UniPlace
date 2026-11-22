@@ -125,6 +125,45 @@ Input loss and generic refusal also support existing #20 and #21.
 M02 remains partially executed: PROBATION boundaries and
 configured-limit submission enforcement remain unresolved.
 
+## M02 PROBATION execution update — 22 November 2026
+
+Fixture: qa.probation, PROBATION standing, GPA 1.80,
+90 credits, zero prior internships, valid CV and recent transcript.
+Configured limits: GOOD=5, PROBATION=2.
+
+| Check | Observed result | Verdict |
+| --- | --- | --- |
+| First to second active application | Supply Chain Intern submitted at 18:03; two Submitted records confirmed | PASS |
+| Second to third active application | Customer Experience Intern submitted at 18:15; three Submitted records confirmed | FAIL — #6 |
+
+Default minimum GPA was temporarily lowered to 1.50 to bypass
+the separate eligibility defect #36, then restored to 2.00.
+Application limits remained GOOD=5 and PROBATION=2.
+
+Evidence: reproduction comment and screenshots attached to issue #6.
+
+This update completes the previously pending PROBATION boundary
+checks. Enforcement after increasing the GOOD limit to 6 remains
+unresolved; the earlier refusal did not establish its specific cause.
+
+## PROBATION eligibility investigation — 22 November 2026
+
+Requirements: APP-04, POS-01; Engine eligibility contract.
+
+Fixture: qa.probation, GPA 1.80, 90 credits, PROBATION,
+zero prior internships, valid CV and recent transcript.
+
+- Field Operations posting: OPEN, minimum GPA 1.50 / 40 credits.
+- First submission refused as ineligible; letter retained.
+- Controlled Engine probe with minGpa=1.50 returned eligible=true.
+- Otherwise identical probe with minGpa=2.00 returned eligible=false.
+- Mapper reads DEFAULT_MIN_GPA from Settings rather than posting GPA.
+- Defect: #36. Evidence attached to the issue.
+- Probe document metadata was representative, not captured Portal traffic.
+
+M02 PROBATION boundaries remain BLOCKED by this eligibility defect.
+Dashboard 0 of 5 also supports existing #6.
+
 ## Supplemental real Engine checks
 
 These are black-box HTTP API checks in tests/acceptance/test_application_engine.py. Each request is stateless and uses explicit fixture dates. Full payloads and responses are saved in evidence/application-engine-trace.json. Results below are from Aisha's execution, not merely the earlier preparation run.

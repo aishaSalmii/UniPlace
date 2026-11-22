@@ -317,3 +317,45 @@ Initially no applications. Settings: GOOD=5, PROBATION=2.
 M02 remains partially executed. PROBATION 1→2→3 boundaries and
 configured-limit submission enforcement remain unresolved.
 Screenshots are attached to issue #30.
+
+## PROBATION fixture and eligibility investigation — 22 November 2026
+
+Created qa.probation (20999003): GPA 1.80, 90 credits,
+PROBATION, zero prior internships, valid CV and recent transcript.
+
+The dashboard displayed 0 of 5, supporting existing #6.
+
+The first Field Operations submission was refused as ineligible,
+although the posting minimum was GPA 1.50 / 40 credits.
+The 182-character motivation letter was retained.
+
+Controlled Engine probes with otherwise identical inputs:
+- minGpa=1.50: eligible=true, reasons=[]
+- minGpa=2.00: eligible=false, GPA below minimum.
+
+Source inspection showed toEligibilityRequest reads DEFAULT_MIN_GPA
+from Settings instead of the posting minimum. Reported as #36
+(APP-04, POS-01; integration).
+
+The probes used representative document metadata, not a capture
+of the Portal's outgoing request.
+
+PROBATION application-limit boundaries remain BLOCKED by eligibility.
+No production-code fix was made.
+
+### PROBATION application boundary test — 22 November 2026
+
+Student: QA Probation Limits; GPA 1.80; 90 credits; PROBATION.
+Configured limits: Good standing 5; Probation 2.
+
+| Check | Expected | Actual | Result |
+|---|---|---|---|
+| 1 → 2 active applications | Second application accepted | Supply Chain Intern submitted at 18:03 | PASS |
+| 2 → 3 active applications | Third application blocked | Customer Experience Intern submitted at 18:15; three Submitted records confirmed | FAIL — #6 |
+
+Default minimum GPA was temporarily lowered to 1.50 to bypass
+the separate eligibility defect #36. It was restored to 2.00
+after testing. Application limits remained 5 and 2.
+
+Evidence: issue #6, reproduction comment and screenshots dated
+22 November 2026 (18:12, 18:15, 18:16 and 18:17).
