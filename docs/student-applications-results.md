@@ -359,3 +359,22 @@ after testing. Application limits remained 5 and 2.
 
 Evidence: issue #6, reproduction comment and screenshots dated
 22 November 2026 (18:12, 18:15, 18:16 and 18:17).
+
+### CI and coverage verification — 22 November 2026
+
+Commit: 278e123.
+
+Portal suite: 223 tests — 213 passed, 8 failures,
+2 errors, 0 skipped.
+
+Service-package line coverage: 756/1037 = 72.90%.
+ApplicationService line coverage: 86/124 = 69.35%.
+
+The service-package coverage target of at least 70% is met.
+The all-tests-pass condition is not met; the unsuccessful
+acceptance checks correspond to documented defects.
+
+Evidence: GitHub Actions run, portal-reports artifact,
+and JaCoCo service-package screenshot.
+
+Actions run: https://github.com/aishaSalmii/UniPlace/actions/runs/45038264676
