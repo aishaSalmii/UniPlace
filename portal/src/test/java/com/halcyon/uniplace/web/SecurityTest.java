@@ -81,4 +81,20 @@ class SecurityTest extends IntegrationTest {
                 .with(user("student" + other.getId()).roles("STUDENT")))
                 .andExpect(status().isForbidden());
     }
+
+    @Test
+    void recruiterCannotViewAnotherCompanyApplication() throws Exception {
+        Company companyA = company("Gulf Bank", CompanyStatus.values()[0]);
+        Company companyB = company("QTech", CompanyStatus.values()[0]);
+
+        User recruiterB = recruiter(companyB);
+
+        Student owner = student("3.50", List.of("Java"));
+        Posting posting = openPosting(companyA, "Software Intern", List.of("Java"), 2);
+        Application app = application(owner, posting, ApplicationState.SUBMITTED, 85);
+
+        mvc.perform(get("/applications/" + app.getId())
+                .with(user(recruiterB.getUsername()).roles("RECRUITER")))
+                .andExpect(status().isForbidden());
+    }
 }
