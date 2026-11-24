@@ -8,6 +8,13 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.web.servlet.MockMvc;
+import com.halcyon.uniplace.domain.Application;
+import com.halcyon.uniplace.domain.ApplicationState;
+import com.halcyon.uniplace.domain.Company;
+import com.halcyon.uniplace.domain.CompanyStatus;
+import com.halcyon.uniplace.domain.Posting;
+import com.halcyon.uniplace.domain.Student;
+import java.util.List;
 
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestBuilders.formLogin;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
@@ -55,5 +62,23 @@ class SecurityTest extends IntegrationTest {
     @Test
     void studentCannotOpenRecruiterPages() throws Exception {
         mvc.perform(get("/recruiter/postings").with(user("s").roles("STUDENT"))).andExpect(status().isForbidden());
+    }
+
+    @Test
+    void studentCannotViewAnotherStudentsApplication() throws Exception {
+        Student owner = student("3.50", List.of("Java"));
+        Student other = student("3.20", List.of("Python"));
+
+        studentUser(owner);
+        studentUser(other);
+
+        Company company = company("Test Company", CompanyStatus.values()[0]);
+        Posting posting = openPosting(company, "Software Intern", List.of("Java"), 2);
+
+        Application app = application(owner, posting, ApplicationState.SUBMITTED, 85);
+
+        mvc.perform(get("/applications/" + app.getId())
+                .with(user("student" + other.getId()).roles("STUDENT")))
+                .andExpect(status().isForbidden());
     }
 }
