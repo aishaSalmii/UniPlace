@@ -421,6 +421,6 @@ Result: dashboard update FAIL; submission-refusal cause remains
 unconfirmed. Input loss and generic refusal support #20 and #21.
 
 The subsequent Settings page displayed GOOD=5, PROBATION=2,
-and default GPA=2.00. Persistence of the restored values and
-removal of the accidentally stored AI-key value still require
-confirmation.
+and default GPA=2.00. Cleanup completed on 25 November 2026: reopened Settings confirmed
+GOOD=5, PROBATION=2 and default GPA=2.00. The accidentally stored
+AI-key value was removed; its status displayed “not set”.
