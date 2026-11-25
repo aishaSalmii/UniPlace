@@ -382,3 +382,45 @@ Evidence: GitHub Actions run, portal-reports artifact,
 and JaCoCo service-package screenshot.
 
 Actions run: https://github.com/aishaSalmii/UniPlace/actions/runs/45038264676
+
+## Additional manual execution — 25 November 2026
+
+### M04 — Posting-filter pagination
+As Coordinator, filtered by Posting ID 26 with State and Company
+unfiltered. The list contained 50 applications across 3 pages.
+
+Clicking Next cleared the Posting ID and displayed unrelated
+postings: Page 2 of 57, 1,127 applications.
+
+Expected: Posting ID 26 retained; Page 2 of 3, 50 applications.
+Result: FAIL — APP-10 / USA-07; additional evidence for #29.
+
+Before:
+http://127.0.0.1:8080/coordinator/applications?state=&companyId=&postingId=26
+
+After:
+http://127.0.0.1:8080/coordinator/applications?page=1
+
+Evidence: before/after screenshots dated 25 November, 19:14 and
+19:17. On another database, use a posting with over 20 applications.
+
+### M02 — GOOD limit change
+Confirmed qa.limits had five Submitted applications, GPA 3.50,
+90 credits, and uploaded CV and recent transcript.
+
+Coordinator changed GOOD from 5 to 6 without restarting.
+The Portal log confirmed the change, but the student dashboard
+still displayed 5 of 5, supporting #30.
+
+Submission to OPEN Generated Internship 26 was refused with a
+generic message and the letter was cleared. Five Submitted
+records remained. No relevant submission error was visible in
+the supplied terminal output.
+
+Result: dashboard update FAIL; submission-refusal cause remains
+unconfirmed. Input loss and generic refusal support #20 and #21.
+
+The subsequent Settings page displayed GOOD=5, PROBATION=2,
+and default GPA=2.00. Persistence of the restored values and
+removal of the accidentally stored AI-key value still require
+confirmation.
