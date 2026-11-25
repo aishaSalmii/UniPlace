@@ -189,14 +189,79 @@ A passing integration check verifies only its stated assertions.
 Mocked Engine results do not verify the real Engine.
 Pagination record counts do not establish response-time performance.
 
+## Supplemental Portal concurrency and state-transition tests
+
+Run from the repository root. These tests use isolated H2 fixtures
+and a mocked Engine; separate Portal and Engine processes are not required.
+
+```bash
+(cd portal && ./mvnw "-Dtest=StudentApplicationConcurrencyTest,StudentApplicationStateTransitionsTest" test -Dmaven.test.failure.ignore=true)
+```
+
+Recorded results:
+- Concurrency: 2 checks, 1 passed, 1 failure (#31).
+- State transitions: 58 checks, 55 passed, 3 failures (#9).
+
+Reports: portal/target/surefire-reports/
+
+Preserved evidence:
+- evidence/student-application-concurrency-results.txt
+- evidence/student-application-concurrency-results.xml
+- evidence/student-application-state-results.txt
+- evidence/student-application-state-results.xml
+
+Do not use the historical concurrency run's coverage figures:
+JaCoCo reported class/execution-data mismatches.
+## Student Applications — M03 local performance check
+
+Location: tests/performance/measure_application_list.py
+
+Prerequisites:
+- Python 3; no third-party packages.
+- Portal running at http://127.0.0.1:8080.
+- Coordinator login.
+- Seed data plus at least 1,000 additional applications.
+- Confirm the exact application total before running.
+- Avoid database changes during measurement.
+
+Run from the repository root, replacing 1127 with the current total:
+
+```bash
+python3 tests/performance/measure_application_list.py --expected-total 1127
+```
+
+Enter the Coordinator password at the hidden prompt.
+
+The script does not generate or reset data. It excludes 8 warm-up
+requests, then measures 100 sequential authenticated GETs across
+four application-list pages.
+
+Evidence is written to evidence/m03-<timestamp>/:
+- environment-and-plan.json
+- requests.csv
+- summary.json
+
+The local workload passes when all measured responses are valid
+and p95 is at most 2,000 ms. Inspect summary.json; the script does
+not explicitly return a nonzero exit status for a measured FAIL.
+
+Historical execution on 16 November 2026:
+1,117 applications; 100 requests; zero invalid/error responses;
+p95 16.572834 ms.
+
+Scope: local sequential HTTP timing only. Login, static assets,
+HTML parsing and browser rendering are excluded from timing.
+Reference-hardware compliance, filters, ownership and concurrent
+users are not established.
+
 ## Other suites and pending work
 
 | Area | Location or status |
 | --- | --- |
 | Offers and allowance | Areej adds commands and results when her suite is available |
 | Users and security | Lana adds commands and results when her suite is available |
-| Manual/system checks | M01–M06 remain pending until executed |
-| Performance testing | Add actual JMeter or equivalent commands and results |
+| Manual/system checks | M01–M06 have recorded executions with remaining scope limitations; see docs/student-applications-results.md. Posting-filter pagination failed on 25 November (#29). |
+| Performance testing | M03 Python HTTP runner documented above; historical local results recorded. Broader performance scope remains unverified. |
 | AI Assistant evaluation | `tests/ai-eval/`; add runnable scripts and recorded results when available |
 
 Suggested folders such as `tests/api/`, `tests/e2e/` and
