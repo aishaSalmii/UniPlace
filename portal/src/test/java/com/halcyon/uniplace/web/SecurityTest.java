@@ -19,6 +19,7 @@ import java.util.List;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestBuilders.formLogin;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.redirectedUrl;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.redirectedUrlPattern;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -95,6 +96,13 @@ class SecurityTest extends IntegrationTest {
 
         mvc.perform(get("/applications/" + app.getId())
                 .with(user(recruiterB.getUsername()).roles("RECRUITER")))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void logoutWithoutCsrfTokenIsForbidden() throws Exception {
+        mvc.perform(post("/account/logout")
+                .with(user("s").roles("STUDENT")))
                 .andExpect(status().isForbidden());
     }
 }
