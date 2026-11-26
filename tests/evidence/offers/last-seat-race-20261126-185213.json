@@ -1,0 +1,43 @@
+{
+  "test": "OFF-04 last-seat race",
+  "runAt": "2026-11-26T18:52:13",
+  "postingBefore": {
+    "status": "Open",
+    "seats": 1,
+    "left": 1
+  },
+  "postingAfter": {
+    "status": "Filled",
+    "seats": 1,
+    "left": 0
+  },
+  "requests": [
+    {
+      "user": "student.ibrahim",
+      "application": 7,
+      "sentAt": "2026-11-26T18:52:12.499",
+      "httpStatus": 302,
+      "redirect": "http://127.0.0.1:8080/applications/7",
+      "message": "Congratulations! You accepted the offer.",
+      "messageKind": "ok",
+      "stateAfter": "Accepted"
+    },
+    {
+      "user": "student.mubarak",
+      "application": 8,
+      "sentAt": "2026-11-26T18:52:12.499",
+      "httpStatus": 302,
+      "redirect": "http://127.0.0.1:8080/applications/8",
+      "message": "Congratulations! You accepted the offer.",
+      "messageKind": "ok",
+      "stateAfter": "Accepted"
+    }
+  ],
+  "checks": {
+    "exactlyOneAccepted": false,
+    "otherRefusedWithExplanation": false,
+    "seatsNeverNegative": true,
+    "postingFilled": true
+  },
+  "verdict": "FAIL"
+}
