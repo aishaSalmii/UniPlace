@@ -3,6 +3,7 @@ package com.halcyon.uniplace.web;
 import com.halcyon.uniplace.domain.Role;
 import com.halcyon.uniplace.domain.User;
 import com.halcyon.uniplace.support.IntegrationTest;
+import com.halcyon.uniplace.service.SettingsService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -19,6 +20,7 @@ import java.util.List;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestBuilders.formLogin;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.redirectedUrl;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.redirectedUrlPattern;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -28,6 +30,7 @@ class SecurityTest extends IntegrationTest {
 
     @Autowired MockMvc mvc;
     @Autowired PasswordEncoder encoder;
+    @Autowired SettingsService settings;
 
     @Test
     void loginPageIsPublic() throws Exception {
@@ -97,4 +100,30 @@ class SecurityTest extends IntegrationTest {
                 .with(user(recruiterB.getUsername()).roles("RECRUITER")))
                 .andExpect(status().isForbidden());
     }
+
+    @Test
+    void logoutWithoutCsrfTokenIsForbidden() throws Exception {
+        mvc.perform(post("/account/logout")
+                .with(user("s").roles("STUDENT")))
+                .andExpect(status().isForbidden());
+    }
+
+
+@Test
+void coordinatorSettingsWithoutCsrfTokenIsForbidden() throws Exception {
+    users.save(new User("coord", encoder.encode("Password123"),
+            Role.COORDINATOR, "Coord", null));
+
+    org.junit.jupiter.api.Assertions.assertEquals(
+            72, settings.offerResponseHours());
+
+    mvc.perform(post("/coordinator/settings")
+            .param(SettingsService.OFFER_RESPONSE_HOURS, "48")
+            .with(user("coord").roles("COORDINATOR")))
+            .andExpect(status().isForbidden());
+
+    org.junit.jupiter.api.Assertions.assertEquals(
+            72, settings.offerResponseHours());
+}
+
 }
