@@ -93,4 +93,13 @@ class UserServiceTest extends IntegrationTest {
         service.create("alpha.user", "Password123", Role.COORDINATOR, "A", null, null, null);
         assertEquals("alpha.user", service.all().get(0).getUsername());
     }
-}
+
+    @Test
+    void passwordChangeRejectsPasswordWithoutDigit() {
+        User u = service.create("teststudent", "Password123", Role.STUDENT,
+                "Test Student", null, null, null);
+
+        assertThrows(BusinessRuleException.class,
+                () -> service.changePassword(u, "Password123", "abcdefghij"));
+        }
+    }
