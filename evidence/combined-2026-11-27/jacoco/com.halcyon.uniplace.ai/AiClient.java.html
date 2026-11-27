@@ -1,0 +1,151 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>AiClient.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">UniPlace Portal</a> &gt; <a href="index.source.html" class="el_package">com.halcyon.uniplace.ai</a> &gt; <span class="el_source">AiClient.java</span></div><h1>AiClient.java</h1><pre class="source lang-java linenums">package com.halcyon.uniplace.ai;
+
+import com.fasterxml.jackson.databind.JsonNode;
+import com.halcyon.uniplace.service.SettingsService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.http.MediaType;
+import org.springframework.http.client.JdkClientHttpRequestFactory;
+import org.springframework.stereotype.Component;
+import org.springframework.web.client.RestClient;
+import org.springframework.web.client.RestClientException;
+import org.springframework.web.client.RestClientResponseException;
+
+import java.net.http.HttpClient;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+
+/** Client for any OpenAI-compatible chat completions endpoint configured in Settings. */
+@Component
+public class AiClient {
+
+<span class="fc" id="L23">    private static final Logger log = LoggerFactory.getLogger(AiClient.class);</span>
+    static final double TEMPERATURE = 1.3;
+    public static final String DEFAULT_MODEL = &quot;gpt-4o-mini&quot;;
+
+    private final RestClient.Builder builder;
+    private final SettingsService settings;
+    private final JdkClientHttpRequestFactory requestFactory;
+
+<span class="fc" id="L31">    public AiClient(RestClient.Builder builder, SettingsService settings) {</span>
+<span class="fc" id="L32">        this.builder = builder;</span>
+<span class="fc" id="L33">        this.settings = settings;</span>
+<span class="fc" id="L34">        this.requestFactory = new JdkClientHttpRequestFactory(</span>
+<span class="fc" id="L35">                HttpClient.newBuilder().version(HttpClient.Version.HTTP_1_1).build());</span>
+<span class="fc" id="L36">    }</span>
+
+    public boolean configured() {
+<span class="fc bfc" id="L39" title="All 4 branches covered.">        return !provider().needsKey() || !settings.get(SettingsService.AI_API_KEY).isBlank();</span>
+    }
+
+    public AiProvider provider() {
+<span class="fc" id="L43">        return AiProvider.of(settings.get(SettingsService.AI_PROVIDER));</span>
+    }
+
+    public String model() {
+<span class="fc" id="L47">        String model = settings.get(SettingsService.AI_MODEL);</span>
+<span class="pc bpc" id="L48" title="1 of 2 branches missed.">        return model.isBlank() ? DEFAULT_MODEL : model.trim();</span>
+    }
+
+    String baseUrl() {
+<span class="fc" id="L52">        String url = settings.get(SettingsService.AI_BASE_URL).trim();</span>
+<span class="pc bpc" id="L53" title="1 of 2 branches missed.">        if (url.isEmpty()) {</span>
+<span class="nc bnc" id="L54" title="All 2 branches missed.">            url = provider().getBaseUrl().isEmpty() ? AiProvider.OPENAI.getBaseUrl() : provider().getBaseUrl();</span>
+        }
+<span class="pc bpc" id="L56" title="1 of 2 branches missed.">        return url.endsWith(&quot;/&quot;) ? url.substring(0, url.length() - 1) : url;</span>
+    }
+
+    /** Sends the messages and returns the content of the first choice. */
+    public String complete(List&lt;ChatMessage&gt; messages) {
+<span class="fc" id="L61">        Map&lt;String, Object&gt; body = new LinkedHashMap&lt;&gt;();</span>
+<span class="fc" id="L62">        body.put(&quot;model&quot;, model());</span>
+<span class="fc" id="L63">        body.put(&quot;messages&quot;, messages);</span>
+<span class="fc" id="L64">        body.put(&quot;temperature&quot;, TEMPERATURE);</span>
+        try {
+<span class="fc" id="L66">            JsonNode response = call(body);</span>
+<span class="pc bpc" id="L67" title="1 of 2 branches missed.">            JsonNode content = response == null ? null : response.path(&quot;choices&quot;).path(0).path(&quot;message&quot;).path(&quot;content&quot;);</span>
+<span class="pc bpc" id="L68" title="2 of 4 branches missed.">            if (content == null || !content.isTextual()) {</span>
+<span class="nc" id="L69">                throw new AiUnavailableException(&quot;no content in provider answer&quot;);</span>
+            }
+<span class="fc" id="L71">            return content.asText();</span>
+<span class="nc" id="L72">        } catch (RestClientException ex) {</span>
+<span class="nc" id="L73">            log.warn(&quot;AI provider call failed: {}&quot;, ex.getClass().getSimpleName());</span>
+<span class="nc" id="L74">            throw new AiUnavailableException(&quot;provider call failed&quot;);</span>
+        }
+    }
+
+    private JsonNode call(Map&lt;String, Object&gt; body) {
+<span class="fc" id="L79">        String key = settings.get(SettingsService.AI_API_KEY).trim();</span>
+<span class="fc" id="L80">        AiProvider provider = provider();</span>
+<span class="fc" id="L81">        return builder.clone()</span>
+<span class="fc" id="L82">                .baseUrl(baseUrl())</span>
+<span class="fc" id="L83">                .requestFactory(requestFactory)</span>
+<span class="fc" id="L84">                .build()</span>
+<span class="fc" id="L85">                .post().uri(&quot;/chat/completions&quot;)</span>
+<span class="fc" id="L86">                .contentType(MediaType.APPLICATION_JSON)</span>
+<span class="fc" id="L87">                .headers(h -&gt; {</span>
+<span class="fc bfc" id="L88" title="All 2 branches covered.">                    if (provider.getAuth() == AiProvider.Auth.API_KEY_HEADER) {</span>
+<span class="fc" id="L89">                        h.set(&quot;api-key&quot;, key);</span>
+<span class="fc bfc" id="L90" title="All 2 branches covered.">                    } else if (!key.isEmpty()) {</span>
+<span class="fc" id="L91">                        h.setBearerAuth(key);</span>
+                    }
+<span class="fc" id="L93">                })</span>
+<span class="fc" id="L94">                .body(body)</span>
+<span class="fc" id="L95">                .retrieve()</span>
+<span class="fc" id="L96">                .body(JsonNode.class);</span>
+    }
+
+<span class="fc" id="L99">    public record ProbeResult(boolean ok, String message) {</span>
+    }
+
+    /** &quot;Test connection&quot; on the Settings page: one short request; reports the answer or the provider's error. */
+    public ProbeResult probe() {
+<span class="pc bpc" id="L104" title="1 of 2 branches missed.">        if (!configured()) {</span>
+<span class="nc" id="L105">            return new ProbeResult(false, &quot;Enter and save the API key first.&quot;);</span>
+        }
+<span class="fc" id="L107">        Map&lt;String, Object&gt; body = new LinkedHashMap&lt;&gt;();</span>
+<span class="fc" id="L108">        body.put(&quot;model&quot;, model());</span>
+<span class="fc" id="L109">        body.put(&quot;messages&quot;, List.of(new ChatMessage(&quot;user&quot;, &quot;Reply with the single word OK.&quot;)));</span>
+<span class="fc" id="L110">        body.put(&quot;temperature&quot;, TEMPERATURE);</span>
+<span class="fc" id="L111">        String key = settings.get(SettingsService.AI_API_KEY).trim();</span>
+        try {
+<span class="fc" id="L113">            JsonNode response = call(body);</span>
+<span class="pc bpc" id="L114" title="1 of 2 branches missed.">            String text = response == null ? &quot;&quot;</span>
+<span class="fc" id="L115">                    : response.path(&quot;choices&quot;).path(0).path(&quot;message&quot;).path(&quot;content&quot;).asText(&quot;&quot;).trim();</span>
+<span class="fc" id="L116">            return new ProbeResult(true, &quot;Connected to &quot; + provider().getLabel() + &quot;, model &quot; + model()</span>
+<span class="fc" id="L117">                    + &quot;. Its answer: \&quot;&quot; + shorten(text, 60, key) + &quot;\&quot;&quot;);</span>
+<span class="fc" id="L118">        } catch (RestClientResponseException ex) {</span>
+<span class="fc" id="L119">            return new ProbeResult(false, provider().getLabel() + &quot; refused the request (HTTP &quot;</span>
+<span class="fc" id="L120">                    + ex.getStatusCode().value() + &quot;): &quot; + shorten(errorMessage(ex.getResponseBodyAsString()), 200, key));</span>
+<span class="nc" id="L121">        } catch (RestClientException ex) {</span>
+<span class="nc" id="L122">            Throwable cause = ex;</span>
+<span class="nc bnc" id="L123" title="All 2 branches missed.">            while (cause.getCause() != null) {</span>
+<span class="nc" id="L124">                cause = cause.getCause();</span>
+            }
+<span class="nc" id="L126">            return new ProbeResult(false, &quot;No answer from &quot; + baseUrl() + &quot; (&quot; + cause.getClass().getSimpleName()</span>
+                    + &quot;). Check the base URL and the network connection.&quot;);
+        }
+    }
+
+    private static String errorMessage(String body) {
+        try {
+<span class="fc" id="L133">            JsonNode n = new com.fasterxml.jackson.databind.ObjectMapper().readTree(body);</span>
+<span class="pc bpc" id="L134" title="1 of 2 branches missed.">            JsonNode e = n.isArray() ? n.path(0).path(&quot;error&quot;) : n.path(&quot;error&quot;);</span>
+<span class="pc bpc" id="L135" title="1 of 2 branches missed.">            String message = e.isTextual() ? e.asText() : e.path(&quot;message&quot;).asText(&quot;&quot;);</span>
+<span class="pc bpc" id="L136" title="1 of 2 branches missed.">            return message.isBlank() ? body : message;</span>
+<span class="nc" id="L137">        } catch (Exception notJson) {</span>
+<span class="nc bnc" id="L138" title="All 2 branches missed.">            return body == null ? &quot;&quot; : body;</span>
+        }
+    }
+
+    /** Never shows the key, even when a provider echoes it back. */
+    private static String shorten(String text, int max, String key) {
+<span class="pc bpc" id="L144" title="1 of 2 branches missed.">        String s = text == null ? &quot;&quot; : text.replace(&quot;\n&quot;, &quot; &quot;);</span>
+<span class="pc bpc" id="L145" title="2 of 4 branches missed.">        if (key != null &amp;&amp; key.length() &gt;= 4) {</span>
+<span class="fc" id="L146">            s = s.replace(key, &quot;****&quot;);</span>
+        }
+<span class="pc bpc" id="L148" title="1 of 2 branches missed.">        return s.length() &lt;= max ? s : s.substring(0, max) + &quot;...&quot;;</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

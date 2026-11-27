@@ -1,0 +1,137 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>TestDataService.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">UniPlace Portal</a> &gt; <a href="index.source.html" class="el_package">com.halcyon.uniplace.service</a> &gt; <span class="el_source">TestDataService.java</span></div><h1>TestDataService.java</h1><pre class="source lang-java linenums">package com.halcyon.uniplace.service;
+
+import com.halcyon.uniplace.domain.Application;
+import com.halcyon.uniplace.domain.ApplicationState;
+import com.halcyon.uniplace.domain.Company;
+import com.halcyon.uniplace.domain.CompanyStatus;
+import com.halcyon.uniplace.domain.Notification;
+import com.halcyon.uniplace.domain.Posting;
+import com.halcyon.uniplace.domain.PostingStatus;
+import com.halcyon.uniplace.domain.Role;
+import com.halcyon.uniplace.domain.Student;
+import com.halcyon.uniplace.domain.User;
+import com.halcyon.uniplace.repository.ApplicationRepository;
+import com.halcyon.uniplace.repository.CompanyRepository;
+import com.halcyon.uniplace.repository.NotificationRepository;
+import com.halcyon.uniplace.repository.PostingRepository;
+import com.halcyon.uniplace.repository.StudentRepository;
+import com.halcyon.uniplace.repository.UserRepository;
+import jakarta.persistence.EntityManager;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.math.BigDecimal;
+import java.time.Clock;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Random;
+
+/**
+ * ADM-05: synthetic volume for performance testing. Generated students, postings and applications are marked
+ * with the prefix &quot;Generated&quot; and do not have login accounts.
+ */
+@Service
+public class TestDataService {
+
+    public static final int MAX_PER_RUN = 10_000;
+<span class="fc" id="L39">    private static final String[] SKILLS = {&quot;Java&quot;, &quot;SQL&quot;, &quot;Python&quot;, &quot;Excel&quot;, &quot;Communication&quot;, &quot;Spring&quot;, &quot;Git&quot;,</span>
+            &quot;JavaScript&quot;, &quot;Safety&quot;, &quot;Writing&quot;, &quot;Statistics&quot;, &quot;Power BI&quot;};
+
+    private final StudentRepository students;
+    private final PostingRepository postings;
+    private final CompanyRepository companies;
+    private final ApplicationRepository applications;
+    private final NotificationRepository notifications;
+    private final UserRepository users;
+    private final EntityManager em;
+    private final Clock clock;
+
+    public TestDataService(StudentRepository students, PostingRepository postings, CompanyRepository companies,
+                           ApplicationRepository applications, NotificationRepository notifications,
+<span class="fc" id="L53">                           UserRepository users, EntityManager em, Clock clock) {</span>
+<span class="fc" id="L54">        this.students = students;</span>
+<span class="fc" id="L55">        this.postings = postings;</span>
+<span class="fc" id="L56">        this.companies = companies;</span>
+<span class="fc" id="L57">        this.applications = applications;</span>
+<span class="fc" id="L58">        this.notifications = notifications;</span>
+<span class="fc" id="L59">        this.users = users;</span>
+<span class="fc" id="L60">        this.em = em;</span>
+<span class="fc" id="L61">        this.clock = clock;</span>
+<span class="fc" id="L62">    }</span>
+
+<span class="fc" id="L64">    public record Result(int students, int postings, int applications, int notifications) {</span>
+    }
+
+    @Transactional
+    public Result generate(int count) {
+<span class="fc bfc" id="L69" title="All 4 branches covered.">        if (count &lt; 1 || count &gt; MAX_PER_RUN) {</span>
+<span class="fc" id="L70">            throw new BusinessRuleException(&quot;Generate between 1 and &quot; + MAX_PER_RUN + &quot; applications per run.&quot;);</span>
+        }
+<span class="fc" id="L72">        Random rnd = new Random(count * 31L + applications.count());</span>
+<span class="fc" id="L73">        LocalDate today = LocalDate.now(clock);</span>
+<span class="fc" id="L74">        LocalDateTime now = LocalDateTime.now(clock);</span>
+<span class="fc" id="L75">        List&lt;Company&gt; approved = companies.findByStatusOrderByNameAsc(CompanyStatus.APPROVED);</span>
+<span class="fc bfc" id="L76" title="All 2 branches covered.">        if (approved.isEmpty()) {</span>
+<span class="fc" id="L77">            throw new BusinessRuleException(&quot;At least one approved company is needed.&quot;);</span>
+        }
+<span class="fc" id="L79">        long base = students.count() + 1;</span>
+
+<span class="fc" id="L81">        List&lt;Student&gt; newStudents = new ArrayList&lt;&gt;();</span>
+<span class="fc" id="L82">        int studentCount = Math.max(1, count / 10);</span>
+<span class="fc bfc" id="L83" title="All 2 branches covered.">        for (int i = 0; i &lt; studentCount; i++) {</span>
+<span class="fc" id="L84">            String number = String.valueOf(70_000_000L + base * 1000 + i);</span>
+<span class="fc" id="L85">            Student s = new Student(number.substring(number.length() - 8), &quot;Generated Student &quot; + (base + i),</span>
+                    &quot;generated&quot; + (base + i) + &quot;@students.uniplace.edu.qa&quot;, &quot;BSc Information Systems&quot;,
+<span class="fc" id="L87">                    BigDecimal.valueOf(200 + rnd.nextInt(200)).movePointLeft(2), 40 + rnd.nextInt(90), 0);</span>
+<span class="fc" id="L88">            s.setSkills(new ArrayList&lt;&gt;(List.of(SKILLS[rnd.nextInt(SKILLS.length)], SKILLS[rnd.nextInt(SKILLS.length)])));</span>
+<span class="fc" id="L89">            newStudents.add(students.save(s));</span>
+        }
+
+<span class="fc" id="L92">        List&lt;Posting&gt; newPostings = new ArrayList&lt;&gt;();</span>
+<span class="fc" id="L93">        int postingCount = Math.max(1, count / 50);</span>
+<span class="fc bfc" id="L94" title="All 2 branches covered.">        for (int i = 0; i &lt; postingCount; i++) {</span>
+<span class="fc" id="L95">            Company c = approved.get(i % approved.size());</span>
+<span class="fc" id="L96">            Posting p = new Posting(c, &quot;Generated Internship &quot; + (postings.count() + 1),</span>
+                    &quot;Generated posting for volume testing.&quot;);
+<span class="fc" id="L98">            p.setRequiredSkills(new ArrayList&lt;&gt;(List.of(SKILLS[rnd.nextInt(SKILLS.length)])));</span>
+<span class="fc" id="L99">            p.setNiceToHaveSkills(new ArrayList&lt;&gt;(List.of(SKILLS[rnd.nextInt(SKILLS.length)])));</span>
+<span class="fc" id="L100">            p.setMinGpa(new BigDecimal(&quot;2.00&quot;));</span>
+<span class="fc" id="L101">            p.setMinCredits(30);</span>
+<span class="fc" id="L102">            p.setSeats(1 + rnd.nextInt(5));</span>
+<span class="fc" id="L103">            p.setDeadline(today.plusDays(5 + rnd.nextInt(30)));</span>
+<span class="fc" id="L104">            p.setStartDate(p.getDeadline().plusDays(21));</span>
+<span class="fc" id="L105">            p.setEndDate(p.getStartDate().plusMonths(3));</span>
+<span class="fc" id="L106">            p.setWeeklyHours(20 + rnd.nextInt(21));</span>
+<span class="fc" id="L107">            p.setMonthlyAllowance(BigDecimal.valueOf(2000 + rnd.nextInt(3000)));</span>
+<span class="fc" id="L108">            p.setStatus(PostingStatus.OPEN);</span>
+<span class="fc" id="L109">            p.setCreatedAt(now);</span>
+<span class="fc" id="L110">            newPostings.add(postings.save(p));</span>
+        }
+
+<span class="fc" id="L113">        ApplicationState[] states = {ApplicationState.SUBMITTED, ApplicationState.SUBMITTED, ApplicationState.SHORTLISTED,</span>
+                ApplicationState.REJECTED, ApplicationState.WITHDRAWN};
+<span class="fc" id="L115">        User recipient = users.findByRole(Role.COORDINATOR).stream().findFirst().orElse(null);</span>
+<span class="fc" id="L116">        int notified = 0;</span>
+<span class="fc bfc" id="L117" title="All 2 branches covered.">        for (int i = 0; i &lt; count; i++) {</span>
+<span class="fc" id="L118">            Student s = newStudents.get(i % newStudents.size());</span>
+<span class="fc" id="L119">            Posting p = newPostings.get((i / newStudents.size() + i) % newPostings.size());</span>
+<span class="fc" id="L120">            Application a = new Application(s, p, &quot;Generated application letter for volume testing. &quot;.repeat(3),</span>
+<span class="fc" id="L121">                    30 + rnd.nextInt(71), now.minusMinutes(rnd.nextInt(60 * 24 * 30)));</span>
+<span class="fc" id="L122">            a.setState(states[rnd.nextInt(states.length)]);</span>
+<span class="fc" id="L123">            applications.save(a);</span>
+<span class="pc bpc" id="L124" title="1 of 2 branches missed.">            if (recipient != null) {</span>
+<span class="nc" id="L125">                notifications.save(new Notification(recipient, &quot;Generated notification &quot; + (i + 1),</span>
+                        &quot;Generated for volume testing.&quot;, now));
+<span class="nc" id="L127">                notified++;</span>
+            }
+<span class="pc bpc" id="L129" title="1 of 2 branches missed.">            if (i % 500 == 499) {</span>
+<span class="nc" id="L130">                em.flush();</span>
+<span class="nc" id="L131">                em.clear();</span>
+            }
+        }
+<span class="fc" id="L134">        return new Result(newStudents.size(), newPostings.size(), count, notified);</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

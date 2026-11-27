@@ -1,0 +1,231 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>PostingService.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">UniPlace Portal</a> &gt; <a href="index.source.html" class="el_package">com.halcyon.uniplace.service</a> &gt; <span class="el_source">PostingService.java</span></div><h1>PostingService.java</h1><pre class="source lang-java linenums">package com.halcyon.uniplace.service;
+
+import com.halcyon.uniplace.domain.Company;
+import com.halcyon.uniplace.domain.CompanyStatus;
+import com.halcyon.uniplace.domain.Posting;
+import com.halcyon.uniplace.domain.PostingStatus;
+import com.halcyon.uniplace.domain.Role;
+import com.halcyon.uniplace.domain.User;
+import com.halcyon.uniplace.engine.MatchScoreService;
+import com.halcyon.uniplace.repository.PostingRepository;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.math.BigDecimal;
+import java.time.Clock;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.util.EnumSet;
+import java.util.List;
+import java.util.Locale;
+
+@Service
+public class PostingService {
+
+    /** POS-07: closed postings stay visible to students for this many days after their deadline. */
+    public static final int CLOSED_VISIBLE_DAYS = 7;
+    static final int MAX_SEATS = 20;
+    static final int MIN_HOURS = 10;
+    static final int MAX_HOURS = 40;
+<span class="fc" id="L30">    static final BigDecimal MAX_ALLOWANCE = new BigDecimal(&quot;5000&quot;);</span>
+
+    private final PostingRepository postings;
+    private final SettingsService settings;
+    private final MatchScoreService matchScores;
+    private final Clock clock;
+
+    public PostingService(PostingRepository postings, SettingsService settings, MatchScoreService matchScores,
+<span class="fc" id="L38">                          Clock clock) {</span>
+<span class="fc" id="L39">        this.postings = postings;</span>
+<span class="fc" id="L40">        this.settings = settings;</span>
+<span class="fc" id="L41">        this.matchScores = matchScores;</span>
+<span class="fc" id="L42">        this.clock = clock;</span>
+<span class="fc" id="L43">    }</span>
+
+    @Transactional(readOnly = true)
+    public Posting get(Long id) {
+<span class="pc" id="L47">        return postings.findWithCompany(id).orElseThrow(() -&gt; new NotFoundException(&quot;Posting&quot;));</span>
+    }
+
+    /** POS-03 and POS-04: an application is accepted until the end of the deadline day. */
+    public boolean acceptsApplications(Posting posting, LocalDate today) {
+<span class="fc bfc" id="L52" title="All 2 branches covered.">        return posting.getStatus() == PostingStatus.OPEN</span>
+<span class="pc bpc" id="L53" title="1 of 2 branches missed.">                &amp;&amp; posting.getCompany().getStatus() == CompanyStatus.APPROVED</span>
+<span class="fc bfc" id="L54" title="All 2 branches covered.">                &amp;&amp; today.isBefore(posting.getDeadline());</span>
+    }
+
+    public boolean visibleToStudents(Posting posting, LocalDate today) {
+<span class="nc bnc" id="L58" title="All 2 branches missed.">        if (posting.getCompany().getStatus() != CompanyStatus.APPROVED) {</span>
+<span class="nc" id="L59">            return false;</span>
+        }
+<span class="nc bnc" id="L61" title="All 2 branches missed.">        if (posting.getStatus() == PostingStatus.OPEN) {</span>
+<span class="nc" id="L62">            return true;</span>
+        }
+<span class="nc bnc" id="L64" title="All 2 branches missed.">        return posting.getStatus() != PostingStatus.DRAFT</span>
+<span class="nc bnc" id="L65" title="All 2 branches missed.">                &amp;&amp; !posting.getDeadline().isBefore(today.minusDays(CLOSED_VISIBLE_DAYS));</span>
+    }
+
+    /** POS-06: search over the postings visible to students, earliest deadline first. */
+    @Transactional(readOnly = true)
+    public List&lt;Posting&gt; search(String skill, Long companyId, BigDecimal minAllowance) {
+<span class="fc" id="L71">        LocalDate today = LocalDate.now(clock);</span>
+<span class="fc bfc" id="L72" title="All 2 branches covered.">        String needle = skill == null ? &quot;&quot; : skill.trim().toLowerCase(Locale.ROOT);</span>
+<span class="fc" id="L73">        EnumSet&lt;PostingStatus&gt; statuses = EnumSet.of(PostingStatus.OPEN, PostingStatus.CLOSED, PostingStatus.FILLED);</span>
+<span class="fc" id="L74">        LocalDate closedSince = today.minusDays(CLOSED_VISIBLE_DAYS);</span>
+<span class="pc bpc" id="L75" title="1 of 2 branches missed.">        List&lt;Posting&gt; visible = companyId == null</span>
+<span class="fc" id="L76">                ? postings.findVisible(CompanyStatus.APPROVED, statuses, closedSince)</span>
+<span class="pc" id="L77">                : postings.findVisibleForCompany(companyId, CompanyStatus.APPROVED, statuses, closedSince);</span>
+<span class="fc" id="L78">        return visible.stream()</span>
+<span class="fc bfc" id="L79" title="All 4 branches covered.">                .filter(p -&gt; needle.isEmpty() || hasSkill(p, needle))</span>
+<span class="pc bpc" id="L80" title="3 of 4 branches missed.">                .filter(p -&gt; minAllowance == null || p.getMonthlyAllowance().compareTo(minAllowance) &gt;= 0)</span>
+<span class="fc" id="L81">                .toList();</span>
+    }
+
+    private static boolean hasSkill(Posting p, String needle) {
+<span class="fc bfc" id="L85" title="All 2 branches covered.">        return p.getRequiredSkills().stream().anyMatch(s -&gt; s.toLowerCase(Locale.ROOT).contains(needle))</span>
+<span class="pc bpc" id="L86" title="1 of 2 branches missed.">                || p.getNiceToHaveSkills().stream().anyMatch(s -&gt; s.toLowerCase(Locale.ROOT).contains(needle));</span>
+    }
+
+    @Transactional(readOnly = true)
+    public List&lt;Posting&gt; forCompany(Company company) {
+<span class="nc" id="L91">        return postings.findByCompanyOrderByDeadlineAsc(company);</span>
+    }
+
+    public PostingForm newForm() {
+<span class="fc" id="L95">        PostingForm f = new PostingForm();</span>
+<span class="fc" id="L96">        LocalDate today = LocalDate.now(clock);</span>
+<span class="fc" id="L97">        f.setMinGpa(settings.getDecimal(SettingsService.DEFAULT_MIN_GPA));</span>
+<span class="fc" id="L98">        f.setMinCredits(settings.getInt(SettingsService.DEFAULT_MIN_CREDITS));</span>
+<span class="fc" id="L99">        f.setSeats(1);</span>
+<span class="fc" id="L100">        f.setDeadline(today.plusWeeks(3));</span>
+<span class="fc" id="L101">        f.setStartDate(today.plusWeeks(6));</span>
+<span class="fc" id="L102">        f.setEndDate(today.plusWeeks(6).plusMonths(3));</span>
+<span class="fc" id="L103">        f.setWeeklyHours(40);</span>
+<span class="fc" id="L104">        f.setMonthlyAllowance(new BigDecimal(&quot;3000&quot;));</span>
+<span class="fc" id="L105">        return f;</span>
+    }
+
+    public PostingForm formOf(Posting p) {
+<span class="nc" id="L109">        PostingForm f = new PostingForm();</span>
+<span class="nc" id="L110">        f.setTitle(p.getTitle());</span>
+<span class="nc" id="L111">        f.setDescription(p.getDescription());</span>
+<span class="nc" id="L112">        f.setRequiredSkills(String.join(&quot;, &quot;, p.getRequiredSkills()));</span>
+<span class="nc" id="L113">        f.setNiceToHaveSkills(String.join(&quot;, &quot;, p.getNiceToHaveSkills()));</span>
+<span class="nc" id="L114">        f.setMinGpa(p.getMinGpa());</span>
+<span class="nc" id="L115">        f.setMinCredits(p.getMinCredits());</span>
+<span class="nc" id="L116">        f.setSeats(p.getSeats());</span>
+<span class="nc" id="L117">        f.setDeadline(p.getDeadline());</span>
+<span class="nc" id="L118">        f.setStartDate(p.getStartDate());</span>
+<span class="nc" id="L119">        f.setEndDate(p.getEndDate());</span>
+<span class="nc" id="L120">        f.setWeeklyHours(p.getWeeklyHours());</span>
+<span class="nc" id="L121">        f.setMonthlyAllowance(p.getMonthlyAllowance());</span>
+<span class="nc" id="L122">        return f;</span>
+    }
+
+    @Transactional
+    public Posting create(User recruiter, PostingForm form) {
+<span class="pc bpc" id="L127" title="2 of 4 branches missed.">        if (!recruiter.is(Role.RECRUITER) || recruiter.getCompany() == null) {</span>
+<span class="nc" id="L128">            throw new BusinessRuleException(&quot;Register your company before creating postings.&quot;);</span>
+        }
+<span class="fc" id="L130">        Posting p = new Posting(recruiter.getCompany(), &quot;&quot;, &quot;&quot;);</span>
+<span class="fc" id="L131">        apply(p, form);</span>
+<span class="fc" id="L132">        p.setCreatedAt(LocalDateTime.now(clock));</span>
+<span class="fc" id="L133">        return postings.save(p);</span>
+    }
+
+    @Transactional
+    public Posting update(Long postingId, PostingForm form) {
+<span class="nc" id="L138">        Posting p = get(postingId);</span>
+<span class="nc bnc" id="L139" title="All 4 branches missed.">        if (p.getStatus() == PostingStatus.CLOSED || p.getStatus() == PostingStatus.FILLED) {</span>
+<span class="nc" id="L140">            throw new BusinessRuleException(&quot;A &quot; + p.getStatus().name().toLowerCase() + &quot; posting cannot be edited.&quot;);</span>
+        }
+<span class="nc bnc" id="L142" title="All 4 branches missed.">        boolean deadlineUnchanged = form.getDeadline() != null &amp;&amp; form.getDeadline().equals(p.getDeadline());</span>
+<span class="nc" id="L143">        apply(p, form, deadlineUnchanged);</span>
+<span class="nc" id="L144">        matchScores.evict(p);</span>
+<span class="nc" id="L145">        return postings.save(p);</span>
+    }
+
+    @Transactional
+    public Posting publish(Long postingId) {
+<span class="fc" id="L150">        Posting p = get(postingId);</span>
+<span class="pc bpc" id="L151" title="1 of 2 branches missed.">        if (p.getStatus() != PostingStatus.DRAFT) {</span>
+<span class="nc" id="L152">            throw new BusinessRuleException(&quot;Only a draft posting can be published.&quot;);</span>
+        }
+<span class="fc bfc" id="L154" title="All 2 branches covered.">        if (p.getCompany().getStatus() != CompanyStatus.APPROVED) {</span>
+<span class="fc" id="L155">            throw new BusinessRuleException(&quot;Only approved companies can publish postings.&quot;);</span>
+        }
+<span class="pc bpc" id="L157" title="1 of 2 branches missed.">        if (p.getDeadline().isBefore(LocalDate.now(clock))) {</span>
+<span class="nc" id="L158">            throw new BusinessRuleException(&quot;The deadline has passed; change it before publishing.&quot;);</span>
+        }
+<span class="fc" id="L160">        p.setStatus(PostingStatus.OPEN);</span>
+<span class="fc" id="L161">        return p;</span>
+    }
+
+    @Transactional
+    public Posting close(Long postingId) {
+<span class="nc" id="L166">        Posting p = get(postingId);</span>
+<span class="nc bnc" id="L167" title="All 2 branches missed.">        if (p.getStatus() != PostingStatus.OPEN) {</span>
+<span class="nc" id="L168">            throw new BusinessRuleException(&quot;Only an open posting can be closed.&quot;);</span>
+        }
+<span class="nc" id="L170">        p.setStatus(PostingStatus.CLOSED);</span>
+<span class="nc" id="L171">        return p;</span>
+    }
+
+    /** POS-03: postings close automatically once their deadline has passed. */
+    @Transactional
+    public int closeExpired() {
+<span class="fc" id="L177">        List&lt;Posting&gt; expired = postings.findByStatusAndDeadlineBefore(PostingStatus.OPEN, LocalDate.now(clock));</span>
+<span class="fc" id="L178">        expired.forEach(p -&gt; p.setStatus(PostingStatus.CLOSED));</span>
+<span class="fc" id="L179">        return expired.size();</span>
+    }
+
+    private void apply(Posting p, PostingForm f) {
+<span class="fc" id="L183">        apply(p, f, false);</span>
+<span class="fc" id="L184">    }</span>
+
+    private void apply(Posting p, PostingForm f, boolean deadlineUnchanged) {
+<span class="fc" id="L187">        LocalDate today = LocalDate.now(clock);</span>
+<span class="pc bpc" id="L188" title="3 of 6 branches missed.">        require(f.getTitle() != null &amp;&amp; !f.getTitle().isBlank() &amp;&amp; f.getTitle().length() &lt;= 150,</span>
+                &quot;The title is required (at most 150 characters).&quot;);
+<span class="pc bpc" id="L190" title="3 of 6 branches missed.">        require(f.getDescription() != null &amp;&amp; !f.getDescription().isBlank() &amp;&amp; f.getDescription().length() &lt;= 4000,</span>
+                &quot;The description is required (at most 4,000 characters).&quot;);
+<span class="fc" id="L192">        List&lt;String&gt; required = StudentService.parseSkills(f.getRequiredSkills());</span>
+<span class="fc bfc" id="L193" title="All 2 branches covered.">        require(!required.isEmpty(), &quot;List at least one required skill.&quot;);</span>
+<span class="fc" id="L194">        List&lt;String&gt; nice = StudentService.parseSkills(f.getNiceToHaveSkills());</span>
+<span class="pc bpc" id="L195" title="1 of 2 branches missed.">        BigDecimal minGpa = f.getMinGpa() == null ? settings.getDecimal(SettingsService.DEFAULT_MIN_GPA) : f.getMinGpa();</span>
+<span class="pc bpc" id="L196" title="1 of 2 branches missed.">        int minCredits = f.getMinCredits() == null ? settings.getInt(SettingsService.DEFAULT_MIN_CREDITS) : f.getMinCredits();</span>
+<span class="pc bpc" id="L197" title="2 of 4 branches missed.">        require(minGpa.signum() &gt;= 0 &amp;&amp; minGpa.compareTo(new BigDecimal(&quot;4.00&quot;)) &lt;= 0, &quot;The minimum GPA must be between 0.00 and 4.00.&quot;);</span>
+<span class="pc bpc" id="L198" title="2 of 4 branches missed.">        require(minCredits &gt;= 0 &amp;&amp; minCredits &lt;= 140, &quot;The minimum credits must be between 0 and 140.&quot;);</span>
+<span class="pc bpc" id="L199" title="1 of 6 branches missed.">        require(f.getSeats() != null &amp;&amp; f.getSeats() &gt;= 1 &amp;&amp; f.getSeats() &lt;= MAX_SEATS, &quot;Seats must be between 1 and 20.&quot;);</span>
+<span class="pc bpc" id="L200" title="3 of 6 branches missed.">        require(f.getDeadline() != null &amp;&amp; f.getStartDate() != null &amp;&amp; f.getEndDate() != null,</span>
+                &quot;The deadline, start date and end date are required.&quot;);
+<span class="pc bpc" id="L202" title="2 of 4 branches missed.">        require(deadlineUnchanged || !f.getDeadline().isBefore(today), &quot;The deadline must be today or later.&quot;);</span>
+<span class="fc" id="L203">        require(f.getStartDate().isAfter(f.getDeadline()), &quot;The start date must be after the deadline.&quot;);</span>
+<span class="fc bfc" id="L204" title="All 2 branches covered.">        require(!f.getEndDate().isBefore(f.getStartDate().plusWeeks(4)), &quot;The internship must last at least 4 weeks.&quot;);</span>
+<span class="fc bfc" id="L205" title="All 2 branches covered.">        require(!f.getEndDate().isAfter(f.getStartDate().plusMonths(6)), &quot;The internship can last at most 6 months.&quot;);</span>
+<span class="pc bpc" id="L206" title="3 of 6 branches missed.">        require(f.getWeeklyHours() != null &amp;&amp; f.getWeeklyHours() &gt;= MIN_HOURS &amp;&amp; f.getWeeklyHours() &lt;= MAX_HOURS,</span>
+                &quot;Weekly hours must be between 10 and 40.&quot;);
+<span class="pc bpc" id="L208" title="2 of 4 branches missed.">        require(f.getMonthlyAllowance() != null &amp;&amp; f.getMonthlyAllowance().signum() &gt;= 0</span>
+<span class="pc bpc" id="L209" title="1 of 2 branches missed.">                &amp;&amp; f.getMonthlyAllowance().compareTo(MAX_ALLOWANCE) &lt;= 0, &quot;The monthly allowance must be between 0 and 5,000.&quot;);</span>
+
+<span class="fc" id="L211">        p.setTitle(f.getTitle().trim());</span>
+<span class="fc" id="L212">        p.setDescription(f.getDescription().trim());</span>
+<span class="fc" id="L213">        p.setRequiredSkills(required);</span>
+<span class="fc" id="L214">        p.setNiceToHaveSkills(nice);</span>
+<span class="fc" id="L215">        p.setMinGpa(minGpa.setScale(2, java.math.RoundingMode.HALF_UP));</span>
+<span class="fc" id="L216">        p.setMinCredits(minCredits);</span>
+<span class="fc" id="L217">        p.setSeats(f.getSeats());</span>
+<span class="fc" id="L218">        p.setDeadline(f.getDeadline());</span>
+<span class="fc" id="L219">        p.setStartDate(f.getStartDate());</span>
+<span class="fc" id="L220">        p.setEndDate(f.getEndDate());</span>
+<span class="fc" id="L221">        p.setWeeklyHours(f.getWeeklyHours());</span>
+<span class="fc" id="L222">        p.setMonthlyAllowance(f.getMonthlyAllowance().setScale(2, java.math.RoundingMode.HALF_UP));</span>
+<span class="fc" id="L223">    }</span>
+
+    private static void require(boolean condition, String message) {
+<span class="fc bfc" id="L226" title="All 2 branches covered.">        if (!condition) {</span>
+<span class="fc" id="L227">            throw new BusinessRuleException(message);</span>
+        }
+<span class="fc" id="L229">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

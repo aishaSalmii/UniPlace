@@ -1,0 +1,134 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>SettingsService.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">UniPlace Portal</a> &gt; <a href="index.source.html" class="el_package">com.halcyon.uniplace.service</a> &gt; <span class="el_source">SettingsService.java</span></div><h1>SettingsService.java</h1><pre class="source lang-java linenums">package com.halcyon.uniplace.service;
+
+import com.halcyon.uniplace.domain.SettingEntry;
+import com.halcyon.uniplace.repository.SettingRepository;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.math.BigDecimal;
+import java.util.LinkedHashMap;
+import java.util.Map;
+import java.util.Objects;
+
+/** Coordinator-editable settings. */
+@Service
+public class SettingsService {
+
+    public static final String MAX_ACTIVE_GOOD = &quot;limits.active.good&quot;;
+    public static final String MAX_ACTIVE_PROBATION = &quot;limits.active.probation&quot;;
+    public static final String SHORTLIST_THRESHOLD = &quot;shortlist.threshold&quot;;
+    public static final String OFFER_RESPONSE_HOURS = &quot;offer.response.hours&quot;;
+    public static final String DEFAULT_MIN_GPA = &quot;posting.default.minGpa&quot;;
+    public static final String DEFAULT_MIN_CREDITS = &quot;posting.default.minCredits&quot;;
+    public static final String TRANSPORT_SUPPLEMENT = &quot;allowance.transport&quot;;
+    public static final String MONTHLY_CAP = &quot;allowance.monthlyCap&quot;;
+    public static final String PENALTY_RATE = &quot;allowance.penaltyRate&quot;;
+    public static final String PENALTY_CAP = &quot;allowance.penaltyCap&quot;;
+    public static final String ENGINE_BASE_URL = &quot;engine.baseUrl&quot;;
+    public static final String AI_PROVIDER = &quot;ai.provider&quot;;
+    public static final String AI_BASE_URL = &quot;ai.baseUrl&quot;;
+    public static final String AI_API_KEY = &quot;ai.apiKey&quot;;
+    public static final String AI_MODEL = &quot;ai.model&quot;;
+    public static final String SMTP_HOST = &quot;smtp.host&quot;;
+    public static final String SMTP_PORT = &quot;smtp.port&quot;;
+    public static final String SMTP_USERNAME = &quot;smtp.username&quot;;
+    public static final String SMTP_PASSWORD = &quot;smtp.password&quot;;
+    public static final String SMTP_FROM = &quot;smtp.from&quot;;
+
+    private final SettingRepository repository;
+<span class="fc" id="L40">    private final Map&lt;String, String&gt; defaults = new LinkedHashMap&lt;&gt;();</span>
+
+    public SettingsService(SettingRepository repository,
+<span class="fc" id="L43">                           @Value(&quot;${uniplace.engine.default-url}&quot;) String engineDefaultUrl) {</span>
+<span class="fc" id="L44">        this.repository = repository;</span>
+<span class="fc" id="L45">        defaults.put(MAX_ACTIVE_GOOD, &quot;5&quot;);</span>
+<span class="fc" id="L46">        defaults.put(MAX_ACTIVE_PROBATION, &quot;2&quot;);</span>
+<span class="fc" id="L47">        defaults.put(SHORTLIST_THRESHOLD, &quot;60&quot;);</span>
+<span class="fc" id="L48">        defaults.put(OFFER_RESPONSE_HOURS, &quot;72&quot;);</span>
+<span class="fc" id="L49">        defaults.put(DEFAULT_MIN_GPA, &quot;2.00&quot;);</span>
+<span class="fc" id="L50">        defaults.put(DEFAULT_MIN_CREDITS, &quot;45&quot;);</span>
+<span class="fc" id="L51">        defaults.put(TRANSPORT_SUPPLEMENT, &quot;300&quot;);</span>
+<span class="fc" id="L52">        defaults.put(MONTHLY_CAP, &quot;5000&quot;);</span>
+<span class="fc" id="L53">        defaults.put(PENALTY_RATE, &quot;0.05&quot;);</span>
+<span class="fc" id="L54">        defaults.put(PENALTY_CAP, &quot;0.20&quot;);</span>
+<span class="fc" id="L55">        defaults.put(ENGINE_BASE_URL, engineDefaultUrl);</span>
+<span class="fc" id="L56">        defaults.put(AI_PROVIDER, &quot;openai&quot;);</span>
+<span class="fc" id="L57">        defaults.put(AI_BASE_URL, &quot;&quot;);</span>
+<span class="fc" id="L58">        defaults.put(AI_API_KEY, &quot;&quot;);</span>
+<span class="fc" id="L59">        defaults.put(AI_MODEL, &quot;&quot;);</span>
+<span class="fc" id="L60">        defaults.put(SMTP_HOST, &quot;&quot;);</span>
+<span class="fc" id="L61">        defaults.put(SMTP_PORT, &quot;587&quot;);</span>
+<span class="fc" id="L62">        defaults.put(SMTP_USERNAME, &quot;&quot;);</span>
+<span class="fc" id="L63">        defaults.put(SMTP_PASSWORD, &quot;&quot;);</span>
+<span class="fc" id="L64">        defaults.put(SMTP_FROM, &quot;uniplace@localhost&quot;);</span>
+<span class="fc" id="L65">    }</span>
+
+    public Map&lt;String, String&gt; keysWithDefaults() {
+<span class="nc" id="L68">        return Map.copyOf(defaults);</span>
+    }
+
+    @Transactional(readOnly = true)
+    public String get(String key) {
+<span class="fc" id="L73">        return repository.findById(key).map(SettingEntry::getValue).orElse(defaults.get(key));</span>
+    }
+
+    public int getInt(String key) {
+<span class="fc" id="L77">        return Integer.parseInt(get(key).trim());</span>
+    }
+
+    public BigDecimal getDecimal(String key) {
+<span class="fc" id="L81">        return new BigDecimal(get(key).trim());</span>
+    }
+
+    /** Stores a value and returns the previous one. */
+    @Transactional
+    public String set(String key, String value) {
+<span class="fc bfc" id="L87" title="All 2 branches covered.">        if (!defaults.containsKey(key)) {</span>
+<span class="fc" id="L88">            throw new IllegalArgumentException(&quot;Unknown setting &quot; + key);</span>
+        }
+<span class="fc" id="L90">        String old = get(key);</span>
+<span class="fc" id="L91">        SettingEntry entry = repository.findById(key).orElseGet(() -&gt; new SettingEntry(key, value));</span>
+<span class="fc" id="L92">        entry.setValue(value);</span>
+<span class="fc" id="L93">        repository.save(entry);</span>
+<span class="fc" id="L94">        return old;</span>
+    }
+
+    public boolean changed(String key, String value) {
+<span class="pc bpc" id="L98" title="1 of 2 branches missed.">        return !Objects.equals(get(key), value);</span>
+    }
+
+    private static volatile Integer maxActiveGood;
+    private static volatile Integer maxActiveProbation;
+    private static volatile Integer shortlistThreshold;
+
+    public int maxActiveGood() {
+<span class="fc bfc" id="L106" title="All 2 branches covered.">        if (maxActiveGood == null) {</span>
+<span class="fc" id="L107">            maxActiveGood = getInt(MAX_ACTIVE_GOOD);</span>
+        }
+<span class="fc" id="L109">        return maxActiveGood;</span>
+    }
+
+    public int maxActiveProbation() {
+<span class="nc bnc" id="L113" title="All 2 branches missed.">        if (maxActiveProbation == null) {</span>
+<span class="nc" id="L114">            maxActiveProbation = getInt(MAX_ACTIVE_PROBATION);</span>
+        }
+<span class="nc" id="L116">        return maxActiveProbation;</span>
+    }
+
+    public int shortlistThreshold() {
+<span class="fc bfc" id="L120" title="All 2 branches covered.">        if (shortlistThreshold == null) {</span>
+<span class="fc" id="L121">            shortlistThreshold = getInt(SHORTLIST_THRESHOLD);</span>
+        }
+<span class="fc" id="L123">        return shortlistThreshold;</span>
+    }
+
+    public int offerResponseHours() {
+<span class="fc" id="L127">        return getInt(OFFER_RESPONSE_HOURS);</span>
+    }
+
+    public String engineBaseUrl() {
+<span class="fc" id="L131">        return get(ENGINE_BASE_URL);</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

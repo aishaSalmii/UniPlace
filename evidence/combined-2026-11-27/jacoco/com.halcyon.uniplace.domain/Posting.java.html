@@ -1,0 +1,129 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>Posting.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">UniPlace Portal</a> &gt; <a href="index.source.html" class="el_package">com.halcyon.uniplace.domain</a> &gt; <span class="el_source">Posting.java</span></div><h1>Posting.java</h1><pre class="source lang-java linenums">package com.halcyon.uniplace.domain;
+
+import jakarta.persistence.CollectionTable;
+import jakarta.persistence.Column;
+import jakarta.persistence.ElementCollection;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OrderColumn;
+import jakarta.persistence.Table;
+
+import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
+
+@Entity
+@Table(name = &quot;postings&quot;)
+public class Posting {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    private Company company;
+
+    @Column(nullable = false, length = 150)
+    private String title;
+
+    @Column(nullable = false, length = 4000)
+    private String description;
+
+<span class="fc" id="L41">    @ElementCollection(fetch = FetchType.EAGER)</span>
+    @CollectionTable(name = &quot;posting_required_skills&quot;, joinColumns = @JoinColumn(name = &quot;posting_id&quot;))
+    @OrderColumn(name = &quot;position&quot;)
+    @Column(name = &quot;skill&quot;, length = 60)
+    private List&lt;String&gt; requiredSkills = new ArrayList&lt;&gt;();
+
+<span class="fc" id="L47">    @ElementCollection(fetch = FetchType.EAGER)</span>
+    @CollectionTable(name = &quot;posting_nice_skills&quot;, joinColumns = @JoinColumn(name = &quot;posting_id&quot;))
+    @OrderColumn(name = &quot;position&quot;)
+    @Column(name = &quot;skill&quot;, length = 60)
+    private List&lt;String&gt; niceToHaveSkills = new ArrayList&lt;&gt;();
+
+    @Column(nullable = false, precision = 3, scale = 2)
+    private BigDecimal minGpa;
+
+    private int minCredits;
+
+    private int seats;
+
+    private int seatsTaken;
+
+    @Column(nullable = false)
+    private LocalDate deadline;
+
+    @Column(nullable = false)
+    private LocalDate startDate;
+
+    @Column(nullable = false)
+    private LocalDate endDate;
+
+    private int weeklyHours;
+
+    @Column(nullable = false, precision = 8, scale = 2)
+    private BigDecimal monthlyAllowance;
+
+<span class="fc" id="L76">    @Enumerated(EnumType.STRING)</span>
+    @Column(nullable = false, length = 20)
+    private PostingStatus status = PostingStatus.DRAFT;
+
+    private LocalDateTime createdAt;
+
+<span class="fc" id="L82">    protected Posting() {</span>
+<span class="fc" id="L83">    }</span>
+
+<span class="fc" id="L85">    public Posting(Company company, String title, String description) {</span>
+<span class="fc" id="L86">        this.company = company;</span>
+<span class="fc" id="L87">        this.title = title;</span>
+<span class="fc" id="L88">        this.description = description;</span>
+<span class="fc" id="L89">    }</span>
+
+    public int seatsLeft() {
+<span class="fc" id="L92">        return Math.max(0, seats - seatsTaken);</span>
+    }
+
+<span class="fc" id="L95">    public Long getId() { return id; }</span>
+<span class="fc" id="L96">    public Company getCompany() { return company; }</span>
+<span class="nc" id="L97">    public void setCompany(Company company) { this.company = company; }</span>
+<span class="fc" id="L98">    public String getTitle() { return title; }</span>
+<span class="fc" id="L99">    public void setTitle(String title) { this.title = title; }</span>
+<span class="nc" id="L100">    public String getDescription() { return description; }</span>
+<span class="fc" id="L101">    public void setDescription(String description) { this.description = description; }</span>
+<span class="fc" id="L102">    public List&lt;String&gt; getRequiredSkills() { return requiredSkills; }</span>
+<span class="fc" id="L103">    public void setRequiredSkills(List&lt;String&gt; requiredSkills) { this.requiredSkills = requiredSkills; }</span>
+<span class="fc" id="L104">    public List&lt;String&gt; getNiceToHaveSkills() { return niceToHaveSkills; }</span>
+<span class="fc" id="L105">    public void setNiceToHaveSkills(List&lt;String&gt; niceToHaveSkills) { this.niceToHaveSkills = niceToHaveSkills; }</span>
+<span class="fc" id="L106">    public BigDecimal getMinGpa() { return minGpa; }</span>
+<span class="fc" id="L107">    public void setMinGpa(BigDecimal minGpa) { this.minGpa = minGpa; }</span>
+<span class="fc" id="L108">    public int getMinCredits() { return minCredits; }</span>
+<span class="fc" id="L109">    public void setMinCredits(int minCredits) { this.minCredits = minCredits; }</span>
+<span class="fc" id="L110">    public int getSeats() { return seats; }</span>
+<span class="fc" id="L111">    public void setSeats(int seats) { this.seats = seats; }</span>
+<span class="fc" id="L112">    public int getSeatsTaken() { return seatsTaken; }</span>
+<span class="fc" id="L113">    public void setSeatsTaken(int seatsTaken) { this.seatsTaken = seatsTaken; }</span>
+<span class="fc" id="L114">    public LocalDate getDeadline() { return deadline; }</span>
+<span class="fc" id="L115">    public void setDeadline(LocalDate deadline) { this.deadline = deadline; }</span>
+<span class="fc" id="L116">    public LocalDate getStartDate() { return startDate; }</span>
+<span class="fc" id="L117">    public void setStartDate(LocalDate startDate) { this.startDate = startDate; }</span>
+<span class="fc" id="L118">    public LocalDate getEndDate() { return endDate; }</span>
+<span class="fc" id="L119">    public void setEndDate(LocalDate endDate) { this.endDate = endDate; }</span>
+<span class="fc" id="L120">    public int getWeeklyHours() { return weeklyHours; }</span>
+<span class="fc" id="L121">    public void setWeeklyHours(int weeklyHours) { this.weeklyHours = weeklyHours; }</span>
+<span class="fc" id="L122">    public BigDecimal getMonthlyAllowance() { return monthlyAllowance; }</span>
+<span class="fc" id="L123">    public void setMonthlyAllowance(BigDecimal monthlyAllowance) { this.monthlyAllowance = monthlyAllowance; }</span>
+<span class="fc" id="L124">    public PostingStatus getStatus() { return status; }</span>
+<span class="fc" id="L125">    public void setStatus(PostingStatus status) { this.status = status; }</span>
+<span class="nc" id="L126">    public LocalDateTime getCreatedAt() { return createdAt; }</span>
+<span class="fc" id="L127">    public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

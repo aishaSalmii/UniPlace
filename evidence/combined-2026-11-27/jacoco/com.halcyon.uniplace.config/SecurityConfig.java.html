@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>SecurityConfig.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">UniPlace Portal</a> &gt; <a href="index.source.html" class="el_package">com.halcyon.uniplace.config</a> &gt; <span class="el_source">SecurityConfig.java</span></div><h1>SecurityConfig.java</h1><pre class="source lang-java linenums">package com.halcyon.uniplace.config;
+
+import com.halcyon.uniplace.security.LoginAttemptService;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.security.authentication.LockedException;
+import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.web.SecurityFilterChain;
+
+@Configuration
+@EnableWebSecurity
+<span class="fc" id="L15">public class SecurityConfig {</span>
+
+    @Bean
+    public PasswordEncoder passwordEncoder() {
+<span class="fc" id="L19">        return new BCryptPasswordEncoder();</span>
+    }
+
+    @Bean
+    public SecurityFilterChain filterChain(HttpSecurity http, LoginAttemptService attempts) throws Exception {
+<span class="fc" id="L24">        http</span>
+<span class="fc" id="L25">            .csrf(csrf -&gt; csrf.ignoringRequestMatchers(&quot;/coordinator/settings/**&quot;))</span>
+<span class="fc" id="L26">            .authorizeHttpRequests(auth -&gt; auth</span>
+<span class="fc" id="L27">                .requestMatchers(&quot;/login&quot;, &quot;/css/**&quot;, &quot;/js/**&quot;, &quot;/favicon.ico&quot;, &quot;/error&quot;).permitAll()</span>
+<span class="fc" id="L28">                .requestMatchers(&quot;/coordinator/settings/**&quot;, &quot;/coordinator/audit/**&quot;, &quot;/coordinator/students/**&quot;,</span>
+                        &quot;/coordinator/companies/**&quot;, &quot;/coordinator/users/**&quot;, &quot;/coordinator/applications/**&quot;,
+                        &quot;/coordinator/offers/**&quot;, &quot;/coordinator/outbox/**&quot;, &quot;/coordinator/tools/**&quot;)
+<span class="fc" id="L31">                    .hasRole(&quot;COORDINATOR&quot;)</span>
+<span class="fc" id="L32">                .requestMatchers(&quot;/recruiter/**&quot;).hasRole(&quot;RECRUITER&quot;)</span>
+<span class="fc" id="L33">                .requestMatchers(&quot;/student/**&quot;).hasRole(&quot;STUDENT&quot;)</span>
+<span class="fc" id="L34">                .anyRequest().authenticated())</span>
+<span class="fc" id="L35">            .formLogin(form -&gt; form</span>
+<span class="fc" id="L36">                .loginPage(&quot;/login&quot;)</span>
+<span class="fc" id="L37">                .successHandler((request, response, authentication) -&gt; {</span>
+<span class="fc" id="L38">                    attempts.succeeded(authentication.getName());</span>
+<span class="fc" id="L39">                    response.sendRedirect(request.getContextPath() + &quot;/dashboard&quot;);</span>
+<span class="fc" id="L40">                })</span>
+<span class="fc" id="L41">                .failureHandler((request, response, exception) -&gt; {</span>
+<span class="fc" id="L42">                    String username = request.getParameter(&quot;username&quot;);</span>
+<span class="pc bpc" id="L43" title="2 of 4 branches missed.">                    if (username != null &amp;&amp; !(exception instanceof LockedException)) {</span>
+<span class="fc" id="L44">                        attempts.failed(username);</span>
+                    }
+<span class="pc bpc" id="L46" title="1 of 2 branches missed.">                    String reason = exception instanceof LockedException ? &quot;locked&quot; : &quot;bad&quot;;</span>
+<span class="fc" id="L47">                    response.sendRedirect(request.getContextPath() + &quot;/login?error=&quot; + reason);</span>
+<span class="fc" id="L48">                })</span>
+<span class="fc" id="L49">                .permitAll())</span>
+<span class="fc" id="L50">            .logout(logout -&gt; logout</span>
+<span class="fc" id="L51">                .logoutUrl(&quot;/logout&quot;)</span>
+<span class="fc" id="L52">                .logoutSuccessUrl(&quot;/login?logout&quot;)</span>
+<span class="fc" id="L53">                .invalidateHttpSession(true)</span>
+<span class="fc" id="L54">                .deleteCookies(&quot;JSESSIONID&quot;))</span>
+<span class="fc" id="L55">            .exceptionHandling(ex -&gt; ex.accessDeniedPage(&quot;/denied&quot;));</span>
+<span class="fc" id="L56">        return http.build();</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

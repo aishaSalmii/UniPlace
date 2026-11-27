@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>MaintenanceScheduler.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">UniPlace Portal</a> &gt; <a href="index.source.html" class="el_package">com.halcyon.uniplace.service</a> &gt; <span class="el_source">MaintenanceScheduler.java</span></div><h1>MaintenanceScheduler.java</h1><pre class="source lang-java linenums">package com.halcyon.uniplace.service;
+
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.scheduling.annotation.Scheduled;
+import org.springframework.stereotype.Component;
+
+/** Periodic housekeeping: closes postings past their deadline, expires offers and sends reminders. */
+@Component
+@ConditionalOnProperty(name = &quot;uniplace.scheduler.enabled&quot;, havingValue = &quot;true&quot;, matchIfMissing = true)
+public class MaintenanceScheduler {
+
+    private final PostingService postings;
+    private final OfferService offers;
+
+<span class="nc" id="L15">    public MaintenanceScheduler(PostingService postings, OfferService offers) {</span>
+<span class="nc" id="L16">        this.postings = postings;</span>
+<span class="nc" id="L17">        this.offers = offers;</span>
+<span class="nc" id="L18">    }</span>
+
+    @Scheduled(initialDelay = 20_000, fixedDelay = 600_000)
+    public void run() {
+<span class="nc" id="L22">        postings.closeExpired();</span>
+<span class="nc" id="L23">        offers.expireOverdue();</span>
+<span class="nc" id="L24">        offers.sendReminders();</span>
+<span class="nc" id="L25">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

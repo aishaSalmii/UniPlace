@@ -1,0 +1,137 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>ReportService.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">UniPlace Portal</a> &gt; <a href="index.source.html" class="el_package">com.halcyon.uniplace.service</a> &gt; <span class="el_source">ReportService.java</span></div><h1>ReportService.java</h1><pre class="source lang-java linenums">package com.halcyon.uniplace.service;
+
+import com.halcyon.uniplace.domain.Application;
+import com.halcyon.uniplace.domain.Company;
+import com.halcyon.uniplace.domain.Offer;
+import com.halcyon.uniplace.domain.OfferStatus;
+import com.halcyon.uniplace.domain.Posting;
+import com.halcyon.uniplace.repository.ApplicationRepository;
+import com.halcyon.uniplace.repository.CompanyRepository;
+import com.halcyon.uniplace.repository.OfferRepository;
+import com.halcyon.uniplace.repository.PostingRepository;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.math.BigDecimal;
+import java.math.RoundingMode;
+import java.time.temporal.ChronoUnit;
+import java.util.ArrayList;
+import java.util.List;
+
+/** ADM-02. */
+@Service
+public class ReportService {
+
+    private final ApplicationRepository applications;
+    private final OfferRepository offers;
+    private final CompanyRepository companies;
+    private final PostingRepository postings;
+
+    public ReportService(ApplicationRepository applications, OfferRepository offers, CompanyRepository companies,
+<span class="fc" id="L31">                         PostingRepository postings) {</span>
+<span class="fc" id="L32">        this.applications = applications;</span>
+<span class="fc" id="L33">        this.offers = offers;</span>
+<span class="fc" id="L34">        this.companies = companies;</span>
+<span class="fc" id="L35">        this.postings = postings;</span>
+<span class="fc" id="L36">    }</span>
+
+<span class="fc" id="L38">    public record Table(String title, List&lt;String&gt; header, List&lt;List&lt;String&gt;&gt; rows) {</span>
+    }
+
+    @Transactional(readOnly = true)
+    public Table placementRate() {
+<span class="nc" id="L43">        List&lt;List&lt;String&gt;&gt; rows = new ArrayList&lt;&gt;();</span>
+<span class="nc bnc" id="L44" title="All 2 branches missed.">        for (Object[] r : applications.placementByProgram()) {</span>
+<span class="nc" id="L45">            long students = ((Number) r[1]).longValue();</span>
+<span class="nc" id="L46">            long placed = ((Number) r[2]).longValue();</span>
+<span class="nc" id="L47">            rows.add(List.of((String) r[0], String.valueOf(students), String.valueOf(placed), percent(placed, students)));</span>
+<span class="nc" id="L48">        }</span>
+<span class="nc" id="L49">        return new Table(&quot;Placement rate per program&quot;, List.of(&quot;Program&quot;, &quot;Students&quot;, &quot;Placed&quot;, &quot;Placement rate&quot;), rows);</span>
+    }
+
+    @Transactional(readOnly = true)
+    public Table averageScorePerCompany() {
+<span class="fc" id="L54">        List&lt;List&lt;String&gt;&gt; rows = new ArrayList&lt;&gt;();</span>
+<span class="fc bfc" id="L55" title="All 2 branches covered.">        for (Company company : companies.findAllByOrderByNameAsc()) {</span>
+<span class="fc" id="L56">            long total = 0;</span>
+<span class="fc" id="L57">            long count = 0;</span>
+<span class="fc bfc" id="L58" title="All 2 branches covered.">            for (Posting posting : postings.findByCompany(company)) {</span>
+<span class="fc bfc" id="L59" title="All 2 branches covered.">                for (Application a : applications.findByPosting(posting)) {</span>
+<span class="fc" id="L60">                    total += a.getMatchScore();</span>
+<span class="fc" id="L61">                    count++;</span>
+<span class="fc" id="L62">                }</span>
+<span class="fc" id="L63">            }</span>
+<span class="pc bpc" id="L64" title="1 of 2 branches missed.">            if (count &gt; 0) {</span>
+<span class="fc" id="L65">                double avg = (double) total / count;</span>
+<span class="fc" id="L66">                rows.add(List.of(company.getName(), BigDecimal.valueOf(avg).setScale(1, RoundingMode.HALF_UP)</span>
+<span class="fc" id="L67">                        .toPlainString(), String.valueOf(count)));</span>
+            }
+<span class="fc" id="L69">        }</span>
+<span class="fc" id="L70">        return new Table(&quot;Average match score per company&quot;, List.of(&quot;Company&quot;, &quot;Average score&quot;, &quot;Applications&quot;), rows);</span>
+    }
+
+    @Transactional(readOnly = true)
+    public Table offersIssuedVersusAccepted() {
+<span class="nc" id="L75">        long issued = offers.count();</span>
+<span class="nc" id="L76">        long accepted = offers.countByStatus(OfferStatus.ACCEPTED);</span>
+<span class="nc" id="L77">        List&lt;List&lt;String&gt;&gt; rows = List.of(List.of(String.valueOf(issued), String.valueOf(accepted),</span>
+<span class="nc" id="L78">                percent(accepted, issued)));</span>
+<span class="nc" id="L79">        return new Table(&quot;Offers issued versus accepted&quot;, List.of(&quot;Issued&quot;, &quot;Accepted&quot;, &quot;Acceptance rate&quot;), rows);</span>
+    }
+
+    @Transactional(readOnly = true)
+    public Table daysToOffer() {
+<span class="nc" id="L84">        List&lt;Offer&gt; all = offers.findAllByOrderByIdAsc();</span>
+<span class="nc" id="L85">        long days = 0;</span>
+<span class="nc bnc" id="L86" title="All 2 branches missed.">        for (Offer o : all) {</span>
+<span class="nc" id="L87">            days += ChronoUnit.DAYS.between(o.getApplication().getSubmittedAt().toLocalDate(), o.getIssuedAt().toLocalDate());</span>
+<span class="nc" id="L88">        }</span>
+<span class="nc bnc" id="L89" title="All 2 branches missed.">        String avg = all.isEmpty() ? &quot;0.0&quot; : BigDecimal.valueOf(days)</span>
+<span class="nc" id="L90">                .divide(BigDecimal.valueOf(all.size()), 1, RoundingMode.HALF_UP).toPlainString();</span>
+<span class="nc" id="L91">        return new Table(&quot;Average days from submission to offer&quot;, List.of(&quot;Offers&quot;, &quot;Average days&quot;),</span>
+<span class="nc" id="L92">                List.of(List.of(String.valueOf(all.size()), avg)));</span>
+    }
+
+    public List&lt;Table&gt; all() {
+<span class="nc" id="L96">        return List.of(placementRate(), averageScorePerCompany(), offersIssuedVersusAccepted(), daysToOffer());</span>
+    }
+
+    public Table byName(String name) {
+<span class="nc bnc" id="L100" title="All 5 branches missed.">        return switch (name) {</span>
+<span class="nc" id="L101">            case &quot;placement&quot; -&gt; placementRate();</span>
+<span class="nc" id="L102">            case &quot;scores&quot; -&gt; averageScorePerCompany();</span>
+<span class="nc" id="L103">            case &quot;offers&quot; -&gt; offersIssuedVersusAccepted();</span>
+<span class="nc" id="L104">            case &quot;days&quot; -&gt; daysToOffer();</span>
+<span class="nc" id="L105">            default -&gt; throw new NotFoundException(&quot;Report&quot;);</span>
+        };
+    }
+
+    public static String toCsv(Table t) {
+<span class="fc" id="L110">        StringBuilder sb = new StringBuilder();</span>
+<span class="fc" id="L111">        sb.append(csvLine(t.header()));</span>
+<span class="fc bfc" id="L112" title="All 2 branches covered.">        for (List&lt;String&gt; row : t.rows()) {</span>
+<span class="fc" id="L113">            sb.append(csvLine(row));</span>
+<span class="fc" id="L114">        }</span>
+<span class="fc" id="L115">        return sb.toString();</span>
+    }
+
+    private static String csvLine(List&lt;String&gt; cells) {
+<span class="fc" id="L119">        List&lt;String&gt; escaped = new ArrayList&lt;&gt;();</span>
+<span class="fc bfc" id="L120" title="All 2 branches covered.">        for (String c : cells) {</span>
+<span class="pc bpc" id="L121" title="1 of 2 branches missed.">            String v = c == null ? &quot;&quot; : c;</span>
+<span class="pc bpc" id="L122" title="2 of 6 branches missed.">            if (v.contains(&quot;,&quot;) || v.contains(&quot;\&quot;&quot;) || v.contains(&quot;\n&quot;)) {</span>
+<span class="fc" id="L123">                v = &quot;\&quot;&quot; + v.replace(&quot;\&quot;&quot;, &quot;\&quot;\&quot;&quot;) + &quot;\&quot;&quot;;</span>
+            }
+<span class="fc" id="L125">            escaped.add(v);</span>
+<span class="fc" id="L126">        }</span>
+<span class="fc" id="L127">        return String.join(&quot;,&quot;, escaped) + &quot;\r\n&quot;;</span>
+    }
+
+    private static String percent(long part, long whole) {
+<span class="nc bnc" id="L131" title="All 2 branches missed.">        if (whole == 0) {</span>
+<span class="nc" id="L132">            return &quot;0.0%&quot;;</span>
+        }
+<span class="nc" id="L134">        return BigDecimal.valueOf(part * 100.0 / whole).setScale(1, RoundingMode.HALF_UP).toPlainString() + &quot;%&quot;;</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>
