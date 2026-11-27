@@ -3,6 +3,7 @@ package com.halcyon.uniplace.web;
 import com.halcyon.uniplace.domain.Role;
 import com.halcyon.uniplace.domain.User;
 import com.halcyon.uniplace.support.IntegrationTest;
+import com.halcyon.uniplace.service.SettingsService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -29,6 +30,7 @@ class SecurityTest extends IntegrationTest {
 
     @Autowired MockMvc mvc;
     @Autowired PasswordEncoder encoder;
+    @Autowired SettingsService settings;
 
     @Test
     void loginPageIsPublic() throws Exception {
@@ -105,4 +107,23 @@ class SecurityTest extends IntegrationTest {
                 .with(user("s").roles("STUDENT")))
                 .andExpect(status().isForbidden());
     }
+
+
+@Test
+void coordinatorSettingsWithoutCsrfTokenIsForbidden() throws Exception {
+    users.save(new User("coord", encoder.encode("Password123"),
+            Role.COORDINATOR, "Coord", null));
+
+    org.junit.jupiter.api.Assertions.assertEquals(
+            72, settings.offerResponseHours());
+
+    mvc.perform(post("/coordinator/settings")
+            .param(SettingsService.OFFER_RESPONSE_HOURS, "48")
+            .with(user("coord").roles("COORDINATOR")))
+            .andExpect(status().isForbidden());
+
+    org.junit.jupiter.api.Assertions.assertEquals(
+            72, settings.offerResponseHours());
+}
+
 }
