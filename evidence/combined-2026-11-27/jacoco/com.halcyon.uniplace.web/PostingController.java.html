@@ -1,0 +1,213 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>PostingController.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">UniPlace Portal</a> &gt; <a href="index.source.html" class="el_package">com.halcyon.uniplace.web</a> &gt; <span class="el_source">PostingController.java</span></div><h1>PostingController.java</h1><pre class="source lang-java linenums">package com.halcyon.uniplace.web;
+
+import com.halcyon.uniplace.ai.AiAssistantService;
+import com.halcyon.uniplace.ai.AiRequestContext;
+import com.halcyon.uniplace.ai.AiUnavailableException;
+import com.halcyon.uniplace.domain.Posting;
+import com.halcyon.uniplace.domain.Role;
+import com.halcyon.uniplace.domain.User;
+import com.halcyon.uniplace.security.CurrentUser;
+import com.halcyon.uniplace.service.AccessGuard;
+import com.halcyon.uniplace.service.ApplicationService;
+import com.halcyon.uniplace.service.BusinessRuleException;
+import com.halcyon.uniplace.service.CompanyService;
+import com.halcyon.uniplace.service.ForbiddenException;
+import com.halcyon.uniplace.service.PostingForm;
+import com.halcyon.uniplace.service.PostingService;
+import com.halcyon.uniplace.service.RankingService;
+import com.halcyon.uniplace.service.SettingsService;
+import org.springframework.stereotype.Controller;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+
+import java.math.BigDecimal;
+import java.time.Clock;
+import java.time.LocalDate;
+
+@Controller
+public class PostingController {
+
+    private final PostingService postings;
+    private final CompanyService companies;
+    private final ApplicationService applications;
+    private final RankingService ranking;
+    private final AiAssistantService assistant;
+    private final CurrentUser currentUser;
+    private final AccessGuard guard;
+    private final SettingsService settings;
+    private final Clock clock;
+
+    public PostingController(PostingService postings, CompanyService companies, ApplicationService applications,
+                             RankingService ranking, AiAssistantService assistant, CurrentUser currentUser,
+<span class="fc" id="L48">                             AccessGuard guard, SettingsService settings, Clock clock) {</span>
+<span class="fc" id="L49">        this.settings = settings;</span>
+<span class="fc" id="L50">        this.postings = postings;</span>
+<span class="fc" id="L51">        this.companies = companies;</span>
+<span class="fc" id="L52">        this.applications = applications;</span>
+<span class="fc" id="L53">        this.ranking = ranking;</span>
+<span class="fc" id="L54">        this.assistant = assistant;</span>
+<span class="fc" id="L55">        this.currentUser = currentUser;</span>
+<span class="fc" id="L56">        this.guard = guard;</span>
+<span class="fc" id="L57">        this.clock = clock;</span>
+<span class="fc" id="L58">    }</span>
+
+    // ---------------------------------------------------------------- students
+
+    @GetMapping(&quot;/postings&quot;)
+    public String list(@RequestParam(required = false) String skill, @RequestParam(required = false) Long companyId,
+                       @RequestParam(required = false) BigDecimal minAllowance, Model model) {
+<span class="nc" id="L65">        model.addAttribute(&quot;postings&quot;, postings.search(skill, companyId, minAllowance));</span>
+<span class="nc" id="L66">        model.addAttribute(&quot;companies&quot;, companies.all());</span>
+<span class="nc" id="L67">        model.addAttribute(&quot;skill&quot;, skill);</span>
+<span class="nc" id="L68">        model.addAttribute(&quot;companyId&quot;, companyId);</span>
+<span class="nc" id="L69">        model.addAttribute(&quot;minAllowance&quot;, minAllowance);</span>
+<span class="nc" id="L70">        model.addAttribute(&quot;today&quot;, LocalDate.now(clock));</span>
+<span class="nc" id="L71">        return &quot;postings/list&quot;;</span>
+    }
+
+    @GetMapping(&quot;/postings/{id}&quot;)
+    @Transactional(readOnly = true)
+    public String detail(@PathVariable Long id, Model model) {
+<span class="nc" id="L77">        User user = currentUser.get();</span>
+<span class="nc" id="L78">        Posting p = postings.get(id);</span>
+<span class="nc" id="L79">        LocalDate today = LocalDate.now(clock);</span>
+<span class="nc bnc" id="L80" title="All 4 branches missed.">        if (user.is(Role.STUDENT) &amp;&amp; !postings.visibleToStudents(p, today)) {</span>
+<span class="nc" id="L81">            throw new com.halcyon.uniplace.service.NotFoundException(&quot;Posting&quot;);</span>
+        }
+<span class="nc bnc" id="L83" title="All 4 branches missed.">        if (user.is(Role.RECRUITER) &amp;&amp; !p.getCompany().equals(user.getCompany())</span>
+<span class="nc bnc" id="L84" title="All 2 branches missed.">                &amp;&amp; !postings.visibleToStudents(p, today)) {</span>
+<span class="nc" id="L85">            throw new ForbiddenException();</span>
+        }
+<span class="nc" id="L87">        model.addAttribute(&quot;posting&quot;, p);</span>
+<span class="nc" id="L88">        model.addAttribute(&quot;open&quot;, postings.acceptsApplications(p, today));</span>
+<span class="nc" id="L89">        model.addAttribute(&quot;user&quot;, user);</span>
+<span class="nc bnc" id="L90" title="All 2 branches missed.">        if (!model.containsAttribute(&quot;letter&quot;)) {</span>
+<span class="nc" id="L91">            model.addAttribute(&quot;letter&quot;, &quot;&quot;);</span>
+        }
+<span class="nc" id="L93">        return &quot;postings/detail&quot;;</span>
+    }
+
+    /** AI-01 and AI-05: letter feedback on the application form. */
+    @PostMapping(&quot;/postings/{id}/feedback&quot;)
+    @Transactional(readOnly = true)
+    public String feedback(@PathVariable Long id, @RequestParam(defaultValue = &quot;&quot;) String letter, Model model) {
+<span class="nc" id="L100">        User user = currentUser.get();</span>
+<span class="nc bnc" id="L101" title="All 4 branches missed.">        if (!user.is(Role.STUDENT) || user.getStudent() == null) {</span>
+<span class="nc" id="L102">            throw new ForbiddenException();</span>
+        }
+<span class="nc" id="L104">        Posting p = postings.get(id);</span>
+<span class="nc bnc" id="L105" title="All 2 branches missed.">        if (letter.isBlank()) {</span>
+<span class="nc" id="L106">            model.addAttribute(&quot;aiError&quot;, &quot;Write your letter first, then ask for feedback.&quot;);</span>
+        } else {
+            try {
+<span class="nc" id="L109">                model.addAttribute(&quot;feedback&quot;, assistant.feedback(new AiRequestContext(user.getStudent(), p, letter)));</span>
+<span class="nc" id="L110">            } catch (AiUnavailableException ex) {</span>
+<span class="nc" id="L111">                model.addAttribute(&quot;aiError&quot;, &quot;Assistant unavailable. You can still submit your application.&quot;);</span>
+<span class="nc" id="L112">            }</span>
+        }
+<span class="nc" id="L114">        model.addAttribute(&quot;letter&quot;, letter);</span>
+<span class="nc" id="L115">        return detail(id, model);</span>
+    }
+
+    // -------------------------------------------------------------- recruiters
+
+    @GetMapping(&quot;/recruiter/postings&quot;)
+    @Transactional(readOnly = true)
+    public String mine(Model model) {
+<span class="nc" id="L123">        User user = currentUser.get();</span>
+<span class="nc" id="L124">        model.addAttribute(&quot;company&quot;, user.getCompany());</span>
+<span class="nc bnc" id="L125" title="All 2 branches missed.">        model.addAttribute(&quot;postings&quot;, user.getCompany() == null ? java.util.List.of() : postings.forCompany(user.getCompany()));</span>
+<span class="nc" id="L126">        return &quot;postings/mine&quot;;</span>
+    }
+
+    @GetMapping(&quot;/recruiter/postings/new&quot;)
+    public String newForm(Model model) {
+<span class="nc" id="L131">        model.addAttribute(&quot;form&quot;, postings.newForm());</span>
+<span class="nc" id="L132">        model.addAttribute(&quot;postingId&quot;, null);</span>
+<span class="nc" id="L133">        return &quot;postings/form&quot;;</span>
+    }
+
+    @PostMapping(&quot;/recruiter/postings&quot;)
+    public String create(@ModelAttribute(&quot;form&quot;) PostingForm form, Model model, RedirectAttributes ra) {
+        try {
+<span class="nc" id="L139">            Posting p = postings.create(currentUser.get(), form);</span>
+<span class="nc" id="L140">            ra.addFlashAttribute(&quot;success&quot;, &quot;Posting saved as a draft.&quot;);</span>
+<span class="nc" id="L141">            return &quot;redirect:/postings/&quot; + p.getId();</span>
+<span class="nc" id="L142">        } catch (BusinessRuleException ex) {</span>
+<span class="nc" id="L143">            model.addAttribute(&quot;error&quot;, ex.getMessage());</span>
+<span class="nc" id="L144">            model.addAttribute(&quot;postingId&quot;, null);</span>
+<span class="nc" id="L145">            return &quot;postings/form&quot;;</span>
+        }
+    }
+
+    @GetMapping(&quot;/recruiter/postings/{id}/edit&quot;)
+    @Transactional(readOnly = true)
+    public String editForm(@PathVariable Long id, Model model) {
+<span class="nc" id="L152">        Posting p = postings.get(id);</span>
+<span class="nc" id="L153">        guard.assertRecruiterOwns(currentUser.get(), p);</span>
+<span class="nc" id="L154">        model.addAttribute(&quot;form&quot;, postings.formOf(p));</span>
+<span class="nc" id="L155">        model.addAttribute(&quot;postingId&quot;, id);</span>
+<span class="nc" id="L156">        model.addAttribute(&quot;status&quot;, p.getStatus());</span>
+<span class="nc" id="L157">        return &quot;postings/form&quot;;</span>
+    }
+
+    @PostMapping(&quot;/recruiter/postings/{id}&quot;)
+    public String update(@PathVariable Long id, @ModelAttribute(&quot;form&quot;) PostingForm form, Model model,
+                         RedirectAttributes ra) {
+        try {
+<span class="nc" id="L164">            postings.update(id, form);</span>
+<span class="nc" id="L165">            return &quot;redirect:/recruiter/postings&quot;;</span>
+<span class="nc" id="L166">        } catch (BusinessRuleException ex) {</span>
+<span class="nc" id="L167">            model.addAttribute(&quot;error&quot;, ex.getMessage());</span>
+<span class="nc" id="L168">            model.addAttribute(&quot;postingId&quot;, id);</span>
+<span class="nc" id="L169">            return &quot;postings/form&quot;;</span>
+        }
+    }
+
+    @PostMapping(&quot;/recruiter/postings/{id}/publish&quot;)
+    public String publish(@PathVariable Long id, RedirectAttributes ra) {
+<span class="nc" id="L175">        guard.assertRecruiterOwns(currentUser.get(), postings.get(id));</span>
+        try {
+<span class="nc" id="L177">            postings.publish(id);</span>
+<span class="nc" id="L178">            ra.addFlashAttribute(&quot;success&quot;, &quot;Posting published.&quot;);</span>
+<span class="nc" id="L179">        } catch (BusinessRuleException ex) {</span>
+<span class="nc" id="L180">            ra.addFlashAttribute(&quot;error&quot;, ex.getMessage());</span>
+<span class="nc" id="L181">        }</span>
+<span class="nc" id="L182">        return &quot;redirect:/postings/&quot; + id;</span>
+    }
+
+    @PostMapping(&quot;/recruiter/postings/{id}/close&quot;)
+    public String close(@PathVariable Long id, RedirectAttributes ra) {
+<span class="nc" id="L187">        guard.assertRecruiterOwns(currentUser.get(), postings.get(id));</span>
+        try {
+<span class="nc" id="L189">            postings.close(id);</span>
+<span class="nc" id="L190">            ra.addFlashAttribute(&quot;success&quot;, &quot;Posting closed.&quot;);</span>
+<span class="nc" id="L191">        } catch (BusinessRuleException ex) {</span>
+<span class="nc" id="L192">            ra.addFlashAttribute(&quot;error&quot;, ex.getMessage());</span>
+<span class="nc" id="L193">        }</span>
+<span class="nc" id="L194">        return &quot;redirect:/postings/&quot; + id;</span>
+    }
+
+    @GetMapping(&quot;/recruiter/postings/{id}/candidates&quot;)
+    @Transactional(readOnly = true)
+    public String candidates(@PathVariable Long id, Model model) {
+<span class="nc" id="L200">        Posting p = postings.get(id);</span>
+<span class="nc" id="L201">        guard.assertRecruiterOwns(currentUser.get(), p);</span>
+<span class="nc" id="L202">        model.addAttribute(&quot;posting&quot;, p);</span>
+        try {
+<span class="nc" id="L204">            model.addAttribute(&quot;candidates&quot;, ranking.rank(p));</span>
+<span class="nc" id="L205">        } catch (BusinessRuleException ex) {</span>
+<span class="nc" id="L206">            model.addAttribute(&quot;candidates&quot;, java.util.List.of());</span>
+<span class="nc" id="L207">            model.addAttribute(&quot;error&quot;, ex.getMessage());</span>
+<span class="nc" id="L208">        }</span>
+<span class="nc" id="L209">        model.addAttribute(&quot;threshold&quot;, settings.shortlistThreshold());</span>
+<span class="nc" id="L210">        return &quot;postings/candidates&quot;;</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

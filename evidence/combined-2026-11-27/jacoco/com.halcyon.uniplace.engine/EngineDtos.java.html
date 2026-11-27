@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>EngineDtos.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">UniPlace Portal</a> &gt; <a href="index.source.html" class="el_package">com.halcyon.uniplace.engine</a> &gt; <span class="el_source">EngineDtos.java</span></div><h1>EngineDtos.java</h1><pre class="source lang-java linenums">package com.halcyon.uniplace.engine;
+
+import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.time.OffsetDateTime;
+import java.util.ArrayList;
+import java.util.List;
+
+/** Request and response bodies of the Engine API (see engine/openapi.yaml). */
+public final class EngineDtos {
+
+    private EngineDtos() {
+    }
+
+<span class="fc" id="L15">    public static class DocumentInfo {</span>
+        public String type;
+        public long sizeBytes;
+        public String mimeType;
+        public LocalDate issueDate;
+    }
+
+<span class="fc" id="L22">    public static class EligibilityRequest {</span>
+        public BigDecimal gpa;
+        public int creditsCompleted;
+        public String standing;
+        public int priorInternships;
+        public BigDecimal minGpa;
+        public int minCredits;
+        public LocalDate asOf;
+<span class="fc" id="L30">        public List&lt;DocumentInfo&gt; documents = new ArrayList&lt;&gt;();</span>
+    }
+
+<span class="fc" id="L33">    public record EligibilityResult(boolean eligible, List&lt;String&gt; reasons) {</span>
+        public static EligibilityResult ok() {
+<span class="fc" id="L35">            return new EligibilityResult(true, List.of());</span>
+        }
+    }
+
+<span class="fc" id="L39">    public static class MatchRequest {</span>
+        public List&lt;String&gt; studentSkills;
+        public List&lt;String&gt; requiredSkills;
+        public List&lt;String&gt; niceToHaveSkills;
+    }
+
+<span class="fc" id="L45">    public record MatchResult(int score, List&lt;String&gt; matchedRequired, List&lt;String&gt; missingRequired,</span>
+                              List&lt;String&gt; matchedNiceToHave) {
+    }
+
+<span class="fc" id="L49">    public static class RankCandidate {</span>
+        public long applicationId;
+        public int score;
+        public BigDecimal gpa;
+        public OffsetDateTime submittedAt;
+    }
+
+<span class="fc" id="L56">    public static class RankRequest {</span>
+        public int seats;
+<span class="fc" id="L58">        public List&lt;RankCandidate&gt; candidates = new ArrayList&lt;&gt;();</span>
+    }
+
+<span class="fc" id="L61">    public record RankResult(List&lt;Long&gt; ranked, List&lt;Long&gt; aboveCut) {</span>
+    }
+
+    public static class Slot {
+        public Object start;
+        public Object end;
+
+<span class="nc" id="L68">        public Slot() {</span>
+<span class="nc" id="L69">        }</span>
+
+<span class="fc" id="L71">        public Slot(Object start, Object end) {</span>
+<span class="fc" id="L72">            this.start = start;</span>
+<span class="fc" id="L73">            this.end = end;</span>
+<span class="fc" id="L74">        }</span>
+    }
+
+<span class="fc" id="L77">    public static class SlotRequest {</span>
+        public Slot candidate;
+<span class="fc" id="L79">        public List&lt;Slot&gt; recruiterSlots = new ArrayList&lt;&gt;();</span>
+<span class="fc" id="L80">        public List&lt;Slot&gt; studentSlots = new ArrayList&lt;&gt;();</span>
+    }
+
+<span class="fc" id="L83">    public record SlotResult(boolean valid, List&lt;String&gt; conflicts) {</span>
+    }
+
+<span class="fc" id="L86">    public static class AllowanceRequest {</span>
+        public BigDecimal monthlyAllowance;
+        public LocalDate startDate;
+        public LocalDate endDate;
+        public int weeklyHours;
+        public int lateDays;
+        public BigDecimal transportSupplement;
+        public BigDecimal monthlyCap;
+        public BigDecimal penaltyRate;
+        public BigDecimal penaltyCap;
+    }
+
+<span class="fc" id="L98">    public record AllowanceLine(String label, BigDecimal amount) {</span>
+    }
+
+<span class="fc" id="L101">    public record AllowanceResult(BigDecimal total, List&lt;AllowanceLine&gt; lines) {</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

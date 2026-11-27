@@ -1,0 +1,258 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>ApplicationController.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">UniPlace Portal</a> &gt; <a href="index.source.html" class="el_package">com.halcyon.uniplace.web</a> &gt; <span class="el_source">ApplicationController.java</span></div><h1>ApplicationController.java</h1><pre class="source lang-java linenums">package com.halcyon.uniplace.web;
+
+import org.springframework.validation.BindingResult;
+import java.util.Map;
+import com.halcyon.uniplace.ai.AiAssistantService;
+import com.halcyon.uniplace.ai.AiRequestContext;
+import com.halcyon.uniplace.ai.AiUnavailableException;
+import com.halcyon.uniplace.domain.Application;
+import com.halcyon.uniplace.domain.ApplicationState;
+import com.halcyon.uniplace.domain.Offer;
+import com.halcyon.uniplace.domain.Role;
+import com.halcyon.uniplace.domain.User;
+import com.halcyon.uniplace.security.CurrentUser;
+import com.halcyon.uniplace.service.AccessGuard;
+import com.halcyon.uniplace.service.ApplicationService;
+import com.halcyon.uniplace.service.BusinessRuleException;
+import com.halcyon.uniplace.service.InterviewService;
+import com.halcyon.uniplace.service.NotEligibleException;
+import com.halcyon.uniplace.service.OfferForm;
+import com.halcyon.uniplace.service.OfferService;
+import com.halcyon.uniplace.service.SettingsService;
+import org.springframework.data.domain.Page;
+import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.stereotype.Controller;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+
+import java.time.LocalDate;
+import java.time.LocalTime;
+
+@Controller
+public class ApplicationController {
+
+    private final ApplicationService applications;
+    private final InterviewService interviews;
+    private final OfferService offers;
+    private final AiAssistantService assistant;
+    private final SettingsService settings;
+    private final CurrentUser currentUser;
+    private final AccessGuard guard;
+
+    public ApplicationController(ApplicationService applications, InterviewService interviews, OfferService offers,
+                                 AiAssistantService assistant, SettingsService settings, CurrentUser currentUser,
+<span class="fc" id="L50">                                 AccessGuard guard) {</span>
+<span class="fc" id="L51">        this.applications = applications;</span>
+<span class="fc" id="L52">        this.interviews = interviews;</span>
+<span class="fc" id="L53">        this.offers = offers;</span>
+<span class="fc" id="L54">        this.assistant = assistant;</span>
+<span class="fc" id="L55">        this.settings = settings;</span>
+<span class="fc" id="L56">        this.currentUser = currentUser;</span>
+<span class="fc" id="L57">        this.guard = guard;</span>
+<span class="fc" id="L58">    }</span>
+
+    /** APP-01 to APP-05. */
+    @PostMapping(&quot;/postings/{id}/apply&quot;)
+    public String apply(@PathVariable Long id, @RequestParam(defaultValue = &quot;&quot;) String letter, RedirectAttributes ra) {
+        try {
+<span class="nc" id="L64">            Application a = applications.submit(currentUser.get(), id, letter);</span>
+<span class="nc" id="L65">            ra.addFlashAttribute(&quot;success&quot;, &quot;Your application was submitted. Match score: &quot; + a.getMatchScore() + &quot;.&quot;);</span>
+<span class="nc" id="L66">            return &quot;redirect:/applications/&quot; + a.getId();</span>
+<span class="nc" id="L67">        } catch (NotEligibleException ex) {</span>
+<span class="nc" id="L68">            ra.addFlashAttribute(&quot;error&quot;, ex.getMessage());</span>
+<span class="nc" id="L69">            ra.addFlashAttribute(&quot;letter&quot;, letter);</span>
+<span class="nc" id="L70">            return &quot;redirect:/postings/&quot; + id;</span>
+<span class="nc" id="L71">        } catch (BusinessRuleException ex) {</span>
+<span class="nc" id="L72">            ra.addFlashAttribute(&quot;error&quot;, &quot;Unable to submit your application. Please check the posting and try again.&quot;);</span>
+<span class="nc" id="L73">            return &quot;redirect:/postings/&quot; + id;</span>
+        }
+    }
+
+    @GetMapping(&quot;/applications&quot;)
+    @Transactional(readOnly = true)
+    public String list(@RequestParam(required = false) ApplicationState state,
+                       @RequestParam(required = false) Long postingId,
+                       @RequestParam(defaultValue = &quot;0&quot;) int page, Model model) {
+<span class="nc" id="L82">        User user = currentUser.get();</span>
+<span class="nc bnc" id="L83" title="All 2 branches missed.">        if (user.is(Role.COORDINATOR)) {</span>
+<span class="nc" id="L84">            return &quot;redirect:/coordinator/applications&quot;;</span>
+        }
+<span class="nc bnc" id="L86" title="All 2 branches missed.">        Page&lt;Application&gt; result = user.is(Role.STUDENT)</span>
+<span class="nc" id="L87">                ? applications.forStudent(user.getStudent(), page)</span>
+<span class="nc" id="L88">                : applications.forRecruiter(user, state, postingId, page);</span>
+<span class="nc" id="L89">        model.addAttribute(&quot;page&quot;, result);</span>
+<span class="nc" id="L90">        model.addAttribute(&quot;state&quot;, state);</span>
+<span class="nc" id="L91">        model.addAttribute(&quot;postingId&quot;, postingId);</span>
+<span class="nc" id="L92">        model.addAttribute(&quot;states&quot;, ApplicationState.values());</span>
+<span class="nc" id="L93">        model.addAttribute(&quot;user&quot;, user);</span>
+<span class="nc" id="L94">        return &quot;applications/list&quot;;</span>
+    }
+
+    @GetMapping(&quot;/applications/{id}&quot;)
+    @Transactional(readOnly = true)
+    public String view(@PathVariable Long id, Model model) {
+<span class="fc" id="L100">        User user = currentUser.get();</span>
+<span class="fc" id="L101">        Application a = applications.get(id);</span>
+<span class="fc" id="L102">        fill(model, user, a);</span>
+<span class="fc" id="L103">        return &quot;applications/view&quot;;</span>
+    }
+
+    private void fill(Model model, User user, Application a) {
+<span class="fc" id="L107">        Offer offer = applications.offerOf(a);</span>
+<span class="fc" id="L108">        model.addAttribute(&quot;app&quot;, a);</span>
+<span class="fc" id="L109">        model.addAttribute(&quot;user&quot;, user);</span>
+<span class="fc" id="L110">        model.addAttribute(&quot;offer&quot;, offer);</span>
+<span class="fc" id="L111">        model.addAttribute(&quot;lines&quot;, offers.linesOf(offer));</span>
+<span class="fc" id="L112">        model.addAttribute(&quot;interviews&quot;, interviews.forApplication(a));</span>
+<span class="fc" id="L113">        model.addAttribute(&quot;threshold&quot;, settings.shortlistThreshold());</span>
+<span class="pc bpc" id="L114" title="1 of 2 branches missed.">        if (!model.containsAttribute(&quot;offerForm&quot;)) {</span>
+<span class="fc" id="L115">            model.addAttribute(&quot;offerForm&quot;, offers.formFor(a));</span>
+        }
+<span class="fc" id="L117">    }</span>
+
+    @PostMapping(&quot;/applications/{id}/withdraw&quot;)
+    public String withdraw(@PathVariable Long id, RedirectAttributes ra) {
+        try {
+<span class="nc" id="L122">            applications.withdraw(currentUser.get(), id);</span>
+<span class="nc" id="L123">            ra.addFlashAttribute(&quot;success&quot;, &quot;Your application was withdrawn.&quot;);</span>
+<span class="nc" id="L124">        } catch (BusinessRuleException ex) {</span>
+<span class="nc" id="L125">            ra.addFlashAttribute(&quot;error&quot;, ex.getMessage());</span>
+<span class="nc" id="L126">        }</span>
+<span class="nc" id="L127">        return &quot;redirect:/applications/&quot; + id;</span>
+    }
+
+    @PostMapping(&quot;/applications/{id}/shortlist&quot;)
+    public String shortlist(@PathVariable Long id, @RequestParam(required = false) String justification,
+                            RedirectAttributes ra) {
+        try {
+<span class="nc" id="L134">            applications.shortlist(currentUser.get(), id, justification);</span>
+<span class="nc" id="L135">            ra.addFlashAttribute(&quot;success&quot;, &quot;Application shortlisted.&quot;);</span>
+<span class="nc" id="L136">        } catch (BusinessRuleException ex) {</span>
+<span class="nc" id="L137">            ra.addFlashAttribute(&quot;error&quot;, ex.getMessage());</span>
+<span class="nc" id="L138">        }</span>
+<span class="nc" id="L139">        return &quot;redirect:/applications/&quot; + id;</span>
+    }
+
+    @PostMapping(&quot;/applications/{id}/reject&quot;)
+    public String reject(@PathVariable Long id, RedirectAttributes ra) {
+        try {
+<span class="nc" id="L145">            applications.reject(currentUser.get(), id);</span>
+<span class="nc" id="L146">            ra.addFlashAttribute(&quot;success&quot;, &quot;Application rejected.&quot;);</span>
+<span class="nc" id="L147">        } catch (BusinessRuleException ex) {</span>
+<span class="nc" id="L148">            ra.addFlashAttribute(&quot;error&quot;, ex.getMessage());</span>
+<span class="nc" id="L149">        }</span>
+<span class="nc" id="L150">        return &quot;redirect:/applications/&quot; + id;</span>
+    }
+
+    @PostMapping(&quot;/applications/{id}/interview&quot;)
+    public String schedule(@PathVariable Long id,
+                           @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
+                           @RequestParam(required = false) @DateTimeFormat(pattern = &quot;HH:mm&quot;) LocalTime from,
+                           @RequestParam(required = false) @DateTimeFormat(pattern = &quot;HH:mm&quot;) LocalTime to,
+                           @RequestParam(defaultValue = &quot;&quot;) String location, RedirectAttributes ra) {
+        try {
+<span class="nc" id="L160">            interviews.schedule(currentUser.get(), id, date, from, to, location);</span>
+<span class="nc" id="L161">            ra.addFlashAttribute(&quot;success&quot;, &quot;Interview scheduled.&quot;);</span>
+<span class="nc" id="L162">        } catch (BusinessRuleException ex) {</span>
+<span class="nc" id="L163">            ra.addFlashAttribute(&quot;error&quot;, ex.getMessage());</span>
+<span class="nc" id="L164">        }</span>
+<span class="nc" id="L165">        return &quot;redirect:/applications/&quot; + id;</span>
+    }
+
+    @PostMapping(&quot;/interviews/{interviewId}/cancel&quot;)
+    public String cancelInterview(@PathVariable Long interviewId, @RequestParam Long applicationId,
+                                  RedirectAttributes ra) {
+        try {
+<span class="nc" id="L172">            interviews.cancel(currentUser.get(), interviewId);</span>
+<span class="nc" id="L173">            ra.addFlashAttribute(&quot;success&quot;, &quot;Interview cancelled.&quot;);</span>
+<span class="nc" id="L174">        } catch (BusinessRuleException ex) {</span>
+<span class="nc" id="L175">            ra.addFlashAttribute(&quot;error&quot;, ex.getMessage());</span>
+<span class="nc" id="L176">        }</span>
+<span class="nc" id="L177">        return &quot;redirect:/applications/&quot; + applicationId;</span>
+    }
+
+    @PostMapping(&quot;/applications/{id}/reschedule&quot;)
+    public String reschedule(@PathVariable Long id, @RequestParam(required = false) String note,
+                             RedirectAttributes ra) {
+        try {
+<span class="nc" id="L184">            interviews.requestReschedule(currentUser.get(), id, note);</span>
+<span class="nc" id="L185">            ra.addFlashAttribute(&quot;success&quot;, &quot;Your reschedule request was sent to the recruiter.&quot;);</span>
+<span class="nc" id="L186">        } catch (BusinessRuleException ex) {</span>
+<span class="nc" id="L187">            ra.addFlashAttribute(&quot;error&quot;, ex.getMessage());</span>
+<span class="nc" id="L188">        }</span>
+<span class="nc" id="L189">        return &quot;redirect:/applications/&quot; + id;</span>
+    }
+
+    /** USA-01: the offer form's fields, named as the form labels them. */
+<span class="fc" id="L193">    static final Map&lt;String, String&gt; OFFER_FIELDS = Map.of(&quot;monthlyAllowance&quot;, &quot;Monthly allowance&quot;,</span>
+            &quot;weeklyHours&quot;, &quot;Weekly hours&quot;, &quot;startDate&quot;, &quot;Start&quot;, &quot;endDate&quot;, &quot;End&quot;);
+<span class="fc" id="L195">    static final Map&lt;String, String&gt; OFFER_HINTS = Map.of(&quot;monthlyAllowance&quot;, &quot;enter an amount, for example 3000.00.&quot;,</span>
+            &quot;weeklyHours&quot;, &quot;enter a whole number of hours.&quot;, &quot;startDate&quot;, &quot;choose a date.&quot;, &quot;endDate&quot;, &quot;choose a date.&quot;);
+
+    @PostMapping(&quot;/applications/{id}/offer&quot;)
+    public String issueOffer(@PathVariable Long id, @ModelAttribute(&quot;offerForm&quot;) OfferForm form,
+                             BindingResult binding, RedirectAttributes ra) {
+<span class="nc bnc" id="L201" title="All 2 branches missed.">        if (binding.hasFieldErrors()) {</span>
+<span class="nc" id="L202">            ra.addFlashAttribute(&quot;error&quot;, binding.getFieldErrors().stream()</span>
+<span class="nc" id="L203">                    .map(e -&gt; &quot;Invalid value for &quot; + e.getField() + &quot;.&quot;)</span>
+<span class="nc" id="L204">                    .distinct().collect(java.util.stream.Collectors.joining(&quot; &quot;)));</span>
+<span class="nc" id="L205">            return &quot;redirect:/applications/&quot; + id;</span>
+        }
+        try {
+<span class="nc" id="L208">            offers.issue(currentUser.get(), id, form);</span>
+<span class="nc" id="L209">            ra.addFlashAttribute(&quot;success&quot;, &quot;Offer issued.&quot;);</span>
+<span class="nc" id="L210">        } catch (BusinessRuleException ex) {</span>
+<span class="nc" id="L211">            ra.addFlashAttribute(&quot;error&quot;, ex.getMessage());</span>
+<span class="nc" id="L212">            ra.addFlashAttribute(&quot;offerForm&quot;, form);</span>
+<span class="nc" id="L213">        }</span>
+<span class="nc" id="L214">        return &quot;redirect:/applications/&quot; + id;</span>
+    }
+
+    /** AI-02: interview questions for the recruiter. */
+    @PostMapping(&quot;/applications/{id}/questions&quot;)
+    @Transactional(readOnly = true)
+    public String questions(@PathVariable Long id, Model model) {
+<span class="nc" id="L221">        User user = currentUser.get();</span>
+<span class="nc" id="L222">        Application a = applications.get(id);</span>
+<span class="nc" id="L223">        guard.assertRecruiterOwns(user, a);</span>
+        try {
+<span class="nc" id="L225">            model.addAttribute(&quot;questions&quot;, assistant.interviewQuestions(</span>
+<span class="nc" id="L226">                    new AiRequestContext(a.getStudent(), a.getPosting(), a.getLetter())));</span>
+<span class="nc" id="L227">        } catch (AiUnavailableException ex) {</span>
+<span class="nc" id="L228">            model.addAttribute(&quot;aiError&quot;, &quot;Assistant unavailable. Try again later.&quot;);</span>
+<span class="nc" id="L229">        }</span>
+<span class="nc" id="L230">        fill(model, user, a);</span>
+<span class="nc" id="L231">        return &quot;applications/view&quot;;</span>
+    }
+
+    @PostMapping(&quot;/offers/{id}/accept&quot;)
+    public String accept(@PathVariable Long id, RedirectAttributes ra) {
+<span class="nc" id="L236">        Offer o = offers.get(id);</span>
+        try {
+<span class="nc" id="L238">            offers.accept(currentUser.get(), id);</span>
+<span class="nc" id="L239">            ra.addFlashAttribute(&quot;success&quot;, &quot;Congratulations! You accepted the offer.&quot;);</span>
+<span class="nc" id="L240">        } catch (BusinessRuleException ex) {</span>
+<span class="nc" id="L241">            ra.addFlashAttribute(&quot;error&quot;, ex.getMessage());</span>
+<span class="nc" id="L242">        }</span>
+<span class="nc" id="L243">        return &quot;redirect:/applications/&quot; + o.getApplication().getId();</span>
+    }
+
+    @PostMapping(&quot;/offers/{id}/decline&quot;)
+    public String decline(@PathVariable Long id, RedirectAttributes ra) {
+<span class="nc" id="L248">        Offer o = offers.get(id);</span>
+        try {
+<span class="nc" id="L250">            offers.decline(currentUser.get(), id);</span>
+<span class="nc" id="L251">            ra.addFlashAttribute(&quot;success&quot;, &quot;You declined the offer.&quot;);</span>
+<span class="nc" id="L252">        } catch (BusinessRuleException ex) {</span>
+<span class="nc" id="L253">            ra.addFlashAttribute(&quot;error&quot;, ex.getMessage());</span>
+<span class="nc" id="L254">        }</span>
+<span class="nc" id="L255">        return &quot;redirect:/applications/&quot; + o.getApplication().getId();</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

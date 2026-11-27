@@ -1,0 +1,275 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>CoordinatorController.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">UniPlace Portal</a> &gt; <a href="index.source.html" class="el_package">com.halcyon.uniplace.web</a> &gt; <span class="el_source">CoordinatorController.java</span></div><h1>CoordinatorController.java</h1><pre class="source lang-java linenums">package com.halcyon.uniplace.web;
+
+import com.halcyon.uniplace.domain.ApplicationState;
+import com.halcyon.uniplace.domain.Role;
+import com.halcyon.uniplace.domain.Student;
+import com.halcyon.uniplace.repository.NotificationRepository;
+import com.halcyon.uniplace.security.CurrentUser;
+import com.halcyon.uniplace.service.AuditService;
+import com.halcyon.uniplace.service.ApplicationService;
+import com.halcyon.uniplace.service.BusinessRuleException;
+import com.halcyon.uniplace.service.CompanyService;
+import com.halcyon.uniplace.service.NotificationService;
+import com.halcyon.uniplace.service.OfferService;
+import com.halcyon.uniplace.service.ReportService;
+import com.halcyon.uniplace.service.StudentService;
+import com.halcyon.uniplace.service.TestDataService;
+import com.halcyon.uniplace.service.UserService;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Controller;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+
+import java.math.BigDecimal;
+import java.nio.charset.StandardCharsets;
+import java.time.LocalDate;
+
+@Controller
+public class CoordinatorController {
+
+    private final StudentService students;
+    private final CompanyService companies;
+    private final UserService users;
+    private final ApplicationService applications;
+    private final OfferService offers;
+    private final NotificationService notifications;
+    private final AuditService audit;
+    private final ReportService reports;
+    private final TestDataService testData;
+    private final CurrentUser currentUser;
+    private final NotificationRepository notificationRepository;
+
+    public CoordinatorController(StudentService students, CompanyService companies, UserService users,
+                                 ApplicationService applications, OfferService offers,
+                                 NotificationService notifications, AuditService audit, ReportService reports,
+                                 TestDataService testData, CurrentUser currentUser,
+<span class="fc" id="L55">                                 NotificationRepository notificationRepository) {</span>
+<span class="fc" id="L56">        this.notificationRepository = notificationRepository;</span>
+<span class="fc" id="L57">        this.students = students;</span>
+<span class="fc" id="L58">        this.companies = companies;</span>
+<span class="fc" id="L59">        this.users = users;</span>
+<span class="fc" id="L60">        this.applications = applications;</span>
+<span class="fc" id="L61">        this.offers = offers;</span>
+<span class="fc" id="L62">        this.notifications = notifications;</span>
+<span class="fc" id="L63">        this.audit = audit;</span>
+<span class="fc" id="L64">        this.reports = reports;</span>
+<span class="fc" id="L65">        this.testData = testData;</span>
+<span class="fc" id="L66">        this.currentUser = currentUser;</span>
+<span class="fc" id="L67">    }</span>
+
+    // ---------------------------------------------------------------- students
+
+    @GetMapping(&quot;/coordinator/students&quot;)
+    public String students(Model model) {
+<span class="nc" id="L73">        model.addAttribute(&quot;students&quot;, students.all());</span>
+<span class="nc" id="L74">        return &quot;coordinator/students&quot;;</span>
+    }
+
+    @GetMapping(&quot;/coordinator/students/{id}&quot;)
+    public String student(@PathVariable Long id, Model model) {
+<span class="nc" id="L79">        model.addAttribute(&quot;student&quot;, students.get(id));</span>
+<span class="nc" id="L80">        return &quot;coordinator/student&quot;;</span>
+    }
+
+    @PostMapping(&quot;/coordinator/students/{id}&quot;)
+    public String saveStudent(@PathVariable Long id, @RequestParam BigDecimal gpa, @RequestParam int creditsCompleted,
+                              @RequestParam int priorInternships, @RequestParam(required = false) String program,
+                              RedirectAttributes ra) {
+        try {
+<span class="nc" id="L88">            students.updateAcademicRecord(id, gpa, creditsCompleted, priorInternships, program);</span>
+<span class="nc" id="L89">            ra.addFlashAttribute(&quot;success&quot;, &quot;Academic record saved.&quot;);</span>
+<span class="nc" id="L90">        } catch (BusinessRuleException ex) {</span>
+<span class="nc" id="L91">            ra.addFlashAttribute(&quot;error&quot;, ex.getMessage());</span>
+<span class="nc" id="L92">        }</span>
+<span class="nc" id="L93">        return &quot;redirect:/coordinator/students/&quot; + id;</span>
+    }
+
+    @PostMapping(&quot;/coordinator/students&quot;)
+    public String createStudent(@RequestParam String studentNumber, @RequestParam String fullName,
+                                @RequestParam String email, @RequestParam String program, @RequestParam BigDecimal gpa,
+                                @RequestParam int creditsCompleted, @RequestParam(defaultValue = &quot;0&quot;) int priorInternships,
+                                @RequestParam String username, @RequestParam String password, RedirectAttributes ra) {
+        try {
+<span class="nc" id="L102">            Student s = createStudentAndUser(studentNumber, fullName, email, program, gpa, creditsCompleted,</span>
+                    priorInternships, username, password);
+<span class="nc" id="L104">            ra.addFlashAttribute(&quot;success&quot;, &quot;Student &quot; + s.getFullName() + &quot; created.&quot;);</span>
+<span class="nc" id="L105">            return &quot;redirect:/coordinator/students/&quot; + s.getId();</span>
+<span class="nc" id="L106">        } catch (BusinessRuleException ex) {</span>
+<span class="nc" id="L107">            ra.addFlashAttribute(&quot;error&quot;, ex.getMessage());</span>
+<span class="nc" id="L108">            return &quot;redirect:/coordinator/students&quot;;</span>
+        }
+    }
+
+    private Student createStudentAndUser(String number, String fullName, String email, String program, BigDecimal gpa,
+                                 int credits, int prior, String username, String password) {
+<span class="nc" id="L114">        UserService.checkPassword(password);</span>
+<span class="nc" id="L115">        users.assertUsernameAvailable(username);</span>
+<span class="nc" id="L116">        Student s = students.create(number, fullName, email, program, gpa, credits, prior);</span>
+<span class="nc" id="L117">        users.create(username, password, Role.STUDENT, fullName, email, s, null);</span>
+<span class="nc" id="L118">        return s;</span>
+    }
+
+    // --------------------------------------------------------------- companies
+
+    @GetMapping(&quot;/coordinator/companies&quot;)
+    public String companies(Model model) {
+<span class="nc" id="L125">        model.addAttribute(&quot;companies&quot;, companies.all());</span>
+<span class="nc" id="L126">        return &quot;coordinator/companies&quot;;</span>
+    }
+
+    @PostMapping(&quot;/coordinator/companies/{id}/approve&quot;)
+    public String approve(@PathVariable Long id, RedirectAttributes ra) {
+<span class="nc" id="L131">        companies.approve(id);</span>
+<span class="nc" id="L132">        ra.addFlashAttribute(&quot;success&quot;, &quot;Company approved.&quot;);</span>
+<span class="nc" id="L133">        return &quot;redirect:/coordinator/companies&quot;;</span>
+    }
+
+    @PostMapping(&quot;/coordinator/companies/{id}/suspend&quot;)
+    public String suspend(@PathVariable Long id, RedirectAttributes ra) {
+        try {
+<span class="nc" id="L139">            companies.suspend(id);</span>
+<span class="nc" id="L140">            ra.addFlashAttribute(&quot;success&quot;, &quot;Company suspended.&quot;);</span>
+<span class="nc" id="L141">        } catch (BusinessRuleException ex) {</span>
+<span class="nc" id="L142">            ra.addFlashAttribute(&quot;error&quot;, ex.getMessage());</span>
+<span class="nc" id="L143">        }</span>
+<span class="nc" id="L144">        return &quot;redirect:/coordinator/companies&quot;;</span>
+    }
+
+    // ------------------------------------------------------------------- users
+
+    @GetMapping(&quot;/coordinator/users&quot;)
+    @Transactional(readOnly = true)
+    public String users(Model model) {
+<span class="nc" id="L152">        model.addAttribute(&quot;users&quot;, users.all());</span>
+<span class="nc" id="L153">        model.addAttribute(&quot;companies&quot;, companies.all());</span>
+<span class="nc" id="L154">        return &quot;coordinator/users&quot;;</span>
+    }
+
+    @PostMapping(&quot;/coordinator/users&quot;)
+    public String createUser(@RequestParam String username, @RequestParam String password, @RequestParam Role role,
+                             @RequestParam String displayName, @RequestParam(required = false) String email,
+                             @RequestParam(required = false) Long companyId, RedirectAttributes ra) {
+        try {
+<span class="nc bnc" id="L162" title="All 2 branches missed.">            if (role == Role.STUDENT) {</span>
+<span class="nc" id="L163">                throw new BusinessRuleException(&quot;Create students from the Students page.&quot;);</span>
+            }
+<span class="nc" id="L165">            users.create(username, password, role, displayName, email, null,</span>
+<span class="nc bnc" id="L166" title="All 4 branches missed.">                    companyId == null || role != Role.RECRUITER ? null : companies.get(companyId));</span>
+<span class="nc" id="L167">            ra.addFlashAttribute(&quot;success&quot;, &quot;User &quot; + username.trim().toLowerCase() + &quot; created.&quot;);</span>
+<span class="nc" id="L168">        } catch (BusinessRuleException ex) {</span>
+<span class="nc" id="L169">            ra.addFlashAttribute(&quot;error&quot;, ex.getMessage());</span>
+<span class="nc" id="L170">        }</span>
+<span class="nc" id="L171">        return &quot;redirect:/coordinator/users&quot;;</span>
+    }
+
+    @PostMapping(&quot;/coordinator/users/{id}/unlock&quot;)
+    public String unlock(@PathVariable Long id, RedirectAttributes ra) {
+<span class="nc" id="L176">        users.unlock(id);</span>
+<span class="nc" id="L177">        ra.addFlashAttribute(&quot;success&quot;, &quot;Account unlocked.&quot;);</span>
+<span class="nc" id="L178">        return &quot;redirect:/coordinator/users&quot;;</span>
+    }
+
+    // ------------------------------------------------------------ applications
+
+    @GetMapping(&quot;/coordinator/applications&quot;)
+    @Transactional(readOnly = true)
+    public String applications(@RequestParam(required = false) ApplicationState state,
+                               @RequestParam(required = false) Long postingId,
+                               @RequestParam(required = false) Long companyId,
+                               @RequestParam(defaultValue = &quot;0&quot;) int page, Model model) {
+<span class="nc" id="L189">        model.addAttribute(&quot;page&quot;, applications.pageForCoordinator(state, postingId, companyId, page));</span>
+<span class="nc" id="L190">        model.addAttribute(&quot;state&quot;, state);</span>
+<span class="nc" id="L191">        model.addAttribute(&quot;postingId&quot;, postingId);</span>
+<span class="nc" id="L192">        model.addAttribute(&quot;companyId&quot;, companyId);</span>
+<span class="nc" id="L193">        model.addAttribute(&quot;states&quot;, ApplicationState.values());</span>
+<span class="nc" id="L194">        model.addAttribute(&quot;companies&quot;, companies.all());</span>
+<span class="nc" id="L195">        return &quot;coordinator/applications&quot;;</span>
+    }
+
+    @PostMapping(&quot;/coordinator/applications/{id}/agreement&quot;)
+    public String agreement(@PathVariable Long id,
+                            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate receivedOn,
+                            RedirectAttributes ra) {
+        try {
+<span class="nc" id="L203">            offers.recordAgreement(id, receivedOn);</span>
+<span class="nc" id="L204">            ra.addFlashAttribute(&quot;success&quot;, &quot;Agreement date recorded and allowance recalculated.&quot;);</span>
+<span class="nc" id="L205">        } catch (BusinessRuleException ex) {</span>
+<span class="nc" id="L206">            ra.addFlashAttribute(&quot;error&quot;, ex.getMessage());</span>
+<span class="nc" id="L207">        }</span>
+<span class="nc" id="L208">        return &quot;redirect:/applications/&quot; + id;</span>
+    }
+
+    @PostMapping(&quot;/coordinator/offers/{id}/recalculate&quot;)
+    public String recalculate(@PathVariable Long id, @RequestParam Long applicationId, RedirectAttributes ra) {
+        try {
+<span class="nc" id="L214">            offers.recalculate(id);</span>
+<span class="nc" id="L215">            ra.addFlashAttribute(&quot;success&quot;, &quot;Allowance statement recalculated.&quot;);</span>
+<span class="nc" id="L216">        } catch (BusinessRuleException ex) {</span>
+<span class="nc" id="L217">            ra.addFlashAttribute(&quot;error&quot;, ex.getMessage());</span>
+<span class="nc" id="L218">        }</span>
+<span class="nc" id="L219">        return &quot;redirect:/applications/&quot; + applicationId;</span>
+    }
+
+    // ------------------------------------------------------- audit and outbox
+
+    @GetMapping(&quot;/coordinator/audit&quot;)
+    public String audit(@RequestParam(defaultValue = &quot;0&quot;) int page, Model model) {
+<span class="nc" id="L226">        model.addAttribute(&quot;page&quot;, audit.page(page));</span>
+<span class="nc" id="L227">        return &quot;coordinator/audit&quot;;</span>
+    }
+
+    /** NOT-03: the whole Outbox. */
+    @GetMapping(&quot;/coordinator/outbox&quot;)
+    @Transactional(readOnly = true)
+    public String outbox(@RequestParam(defaultValue = &quot;0&quot;) int page, Model model) {
+<span class="nc" id="L234">        model.addAttribute(&quot;page&quot;, new PageImpl&lt;&gt;(notificationRepository.findAllByOrderByCreatedAtDescIdDesc()));</span>
+<span class="nc" id="L235">        model.addAttribute(&quot;all&quot;, true);</span>
+<span class="nc" id="L236">        return &quot;notifications&quot;;</span>
+    }
+
+    // ----------------------------------------------------------------- reports
+
+    @GetMapping(&quot;/coordinator/reports&quot;)
+    public String reports(Model model) {
+<span class="nc" id="L243">        model.addAttribute(&quot;tables&quot;, reports.all());</span>
+<span class="nc" id="L244">        return &quot;coordinator/reports&quot;;</span>
+    }
+
+    @GetMapping(&quot;/coordinator/reports/{name}.csv&quot;)
+    public ResponseEntity&lt;byte[]&gt; export(@PathVariable String name) {
+<span class="nc" id="L249">        byte[] body = ReportService.toCsv(reports.byName(name)).getBytes(StandardCharsets.UTF_8);</span>
+<span class="nc" id="L250">        return ResponseEntity.ok()</span>
+<span class="nc" id="L251">                .contentType(new MediaType(&quot;text&quot;, &quot;csv&quot;, StandardCharsets.UTF_8))</span>
+<span class="nc" id="L252">                .header(HttpHeaders.CONTENT_DISPOSITION, &quot;attachment; filename=\&quot;uniplace-&quot; + name + &quot;.csv\&quot;&quot;)</span>
+<span class="nc" id="L253">                .body(body);</span>
+    }
+
+    // ------------------------------------------------------------------- tools
+
+    @GetMapping(&quot;/coordinator/tools&quot;)
+    public String tools() {
+<span class="nc" id="L260">        return &quot;coordinator/tools&quot;;</span>
+    }
+
+    @PostMapping(&quot;/coordinator/tools/generate&quot;)
+    public String generate(@RequestParam(defaultValue = &quot;1000&quot;) int count, RedirectAttributes ra) {
+        try {
+<span class="nc" id="L266">            TestDataService.Result r = testData.generate(count);</span>
+<span class="nc" id="L267">            ra.addFlashAttribute(&quot;success&quot;, &quot;Generated &quot; + r.applications() + &quot; applications, &quot; + r.students()</span>
+<span class="nc" id="L268">                    + &quot; students, &quot; + r.postings() + &quot; postings and &quot; + r.notifications() + &quot; notifications.&quot;);</span>
+<span class="nc" id="L269">        } catch (BusinessRuleException ex) {</span>
+<span class="nc" id="L270">            ra.addFlashAttribute(&quot;error&quot;, ex.getMessage());</span>
+<span class="nc" id="L271">        }</span>
+<span class="nc" id="L272">        return &quot;redirect:/coordinator/tools&quot;;</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>NotificationService.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">UniPlace Portal</a> &gt; <a href="index.source.html" class="el_package">com.halcyon.uniplace.service</a> &gt; <span class="el_source">NotificationService.java</span></div><h1>NotificationService.java</h1><pre class="source lang-java linenums">package com.halcyon.uniplace.service;
+
+import com.halcyon.uniplace.domain.Notification;
+import com.halcyon.uniplace.domain.User;
+import com.halcyon.uniplace.repository.NotificationRepository;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.mail.SimpleMailMessage;
+import org.springframework.mail.javamail.JavaMailSenderImpl;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.time.Clock;
+import java.time.LocalDateTime;
+
+/** Records notifications in the Outbox and, when SMTP is configured, also e-mails them. */
+@Service
+public class NotificationService {
+
+<span class="fc" id="L22">    private static final Logger log = LoggerFactory.getLogger(NotificationService.class);</span>
+    public static final int PAGE_SIZE = 20;
+
+    private final NotificationRepository repository;
+    private final SettingsService settings;
+    private final Clock clock;
+
+<span class="fc" id="L29">    public NotificationService(NotificationRepository repository, SettingsService settings, Clock clock) {</span>
+<span class="fc" id="L30">        this.repository = repository;</span>
+<span class="fc" id="L31">        this.settings = settings;</span>
+<span class="fc" id="L32">        this.clock = clock;</span>
+<span class="fc" id="L33">    }</span>
+
+    @Transactional
+    public Notification notify(User recipient, String subject, String body) {
+<span class="fc" id="L37">        Notification n = repository.save(new Notification(recipient, subject, body, LocalDateTime.now(clock)));</span>
+<span class="fc" id="L38">        sendMail(recipient, subject, body);</span>
+<span class="fc" id="L39">        return n;</span>
+    }
+
+    private void sendMail(User recipient, String subject, String body) {
+<span class="fc" id="L43">        String host = settings.get(SettingsService.SMTP_HOST).trim();</span>
+<span class="pc bpc" id="L44" title="5 of 6 branches missed.">        if (host.isEmpty() || recipient.getEmail() == null || recipient.getEmail().isBlank()) {</span>
+<span class="fc" id="L45">            return;</span>
+        }
+        try {
+<span class="nc" id="L48">            JavaMailSenderImpl sender = new JavaMailSenderImpl();</span>
+<span class="nc" id="L49">            sender.setHost(host);</span>
+<span class="nc" id="L50">            sender.setPort(Integer.parseInt(settings.get(SettingsService.SMTP_PORT).trim()));</span>
+<span class="nc" id="L51">            sender.setUsername(settings.get(SettingsService.SMTP_USERNAME));</span>
+<span class="nc" id="L52">            sender.setPassword(settings.get(SettingsService.SMTP_PASSWORD));</span>
+<span class="nc bnc" id="L53" title="All 2 branches missed.">            sender.getJavaMailProperties().put(&quot;mail.smtp.auth&quot;, String.valueOf(!sender.getUsername().isBlank()));</span>
+<span class="nc" id="L54">            sender.getJavaMailProperties().put(&quot;mail.smtp.starttls.enable&quot;, &quot;true&quot;);</span>
+<span class="nc" id="L55">            sender.getJavaMailProperties().put(&quot;mail.smtp.connectiontimeout&quot;, &quot;5000&quot;);</span>
+<span class="nc" id="L56">            sender.getJavaMailProperties().put(&quot;mail.smtp.timeout&quot;, &quot;5000&quot;);</span>
+<span class="nc" id="L57">            SimpleMailMessage msg = new SimpleMailMessage();</span>
+<span class="nc" id="L58">            msg.setFrom(settings.get(SettingsService.SMTP_FROM));</span>
+<span class="nc" id="L59">            msg.setTo(recipient.getEmail());</span>
+<span class="nc" id="L60">            msg.setSubject(subject);</span>
+<span class="nc" id="L61">            msg.setText(body);</span>
+<span class="nc" id="L62">            sender.send(msg);</span>
+<span class="nc" id="L63">        } catch (RuntimeException ex) {</span>
+<span class="nc" id="L64">            log.warn(&quot;E-mail to user {} not sent: {}&quot;, recipient.getUsername(), ex.getClass().getSimpleName());</span>
+<span class="nc" id="L65">            throw new BusinessRuleException(&quot;The e-mail to &quot; + recipient.getEmail() + &quot; could not be sent. &quot;</span>
+                    + &quot;Check the e-mail settings and try again.&quot;);
+<span class="nc" id="L67">        }</span>
+<span class="nc" id="L68">    }</span>
+
+    @Transactional(readOnly = true)
+    public Page&lt;Notification&gt; forUser(User user, int page) {
+<span class="fc" id="L72">        return repository.findByRecipientOrderByCreatedAtDescIdDesc(user, PageRequest.of(Math.max(0, page), PAGE_SIZE));</span>
+    }
+
+    @Transactional(readOnly = true)
+    public Page&lt;Notification&gt; all(int page) {
+<span class="fc" id="L77">        return repository.findAllByOrderByCreatedAtDescIdDesc(PageRequest.of(Math.max(0, page), PAGE_SIZE));</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

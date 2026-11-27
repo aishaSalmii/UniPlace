@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>Fmt.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">UniPlace Portal</a> &gt; <a href="index.source.html" class="el_package">com.halcyon.uniplace.web</a> &gt; <span class="el_source">Fmt.java</span></div><h1>Fmt.java</h1><pre class="source lang-java linenums">package com.halcyon.uniplace.web;
+
+import org.springframework.stereotype.Component;
+
+import java.math.BigDecimal;
+import java.math.RoundingMode;
+import java.text.DecimalFormat;
+import java.text.DecimalFormatSymbols;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
+import java.util.Locale;
+
+/** USA-02 and USA-04: display formats, available in templates as {@code @fmt}. */
+@Component(&quot;fmt&quot;)
+<span class="fc" id="L17">public class Fmt {</span>
+
+<span class="fc" id="L19">    private static final DateTimeFormatter DATE = DateTimeFormatter.ofPattern(&quot;dd/MM/yyyy&quot;);</span>
+<span class="fc" id="L20">    private static final DateTimeFormatter DATE_TIME = DateTimeFormatter.ofPattern(&quot;dd/MM/yyyy HH:mm&quot;);</span>
+<span class="fc" id="L21">    private static final DateTimeFormatter TIME = DateTimeFormatter.ofPattern(&quot;HH:mm&quot;);</span>
+
+    public String date(LocalDate d) {
+<span class="fc bfc" id="L24" title="All 2 branches covered.">        return d == null ? &quot;&quot; : d.format(DATE);</span>
+    }
+
+    public String dateTime(LocalDateTime d) {
+<span class="pc bpc" id="L28" title="1 of 2 branches missed.">        return d == null ? &quot;&quot; : d.format(DATE_TIME);</span>
+    }
+
+    public String time(LocalDateTime d) {
+<span class="nc bnc" id="L32" title="All 2 branches missed.">        return d == null ? &quot;&quot; : d.toLocalTime().format(TIME);</span>
+    }
+
+    public String time(LocalTime t) {
+<span class="nc bnc" id="L36" title="All 2 branches missed.">        return t == null ? &quot;&quot; : t.format(TIME);</span>
+    }
+
+    public String money(BigDecimal amount) {
+<span class="pc bpc" id="L40" title="1 of 2 branches missed.">        if (amount == null) {</span>
+<span class="nc" id="L41">            return &quot;&quot;;</span>
+        }
+<span class="fc" id="L43">        DecimalFormat df = new DecimalFormat(&quot;#,##0.00&quot;, DecimalFormatSymbols.getInstance(Locale.ENGLISH));</span>
+<span class="fc" id="L44">        return &quot;QAR &quot; + df.format(amount.setScale(2, RoundingMode.HALF_UP));</span>
+    }
+
+    public String label(Enum&lt;?&gt; e) {
+<span class="pc bpc" id="L48" title="1 of 2 branches missed.">        if (e == null) {</span>
+<span class="nc" id="L49">            return &quot;&quot;;</span>
+        }
+<span class="fc" id="L51">        String s = e.name().toLowerCase(Locale.ROOT).replace('_', ' ');</span>
+<span class="fc" id="L52">        return Character.toUpperCase(s.charAt(0)) + s.substring(1);</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

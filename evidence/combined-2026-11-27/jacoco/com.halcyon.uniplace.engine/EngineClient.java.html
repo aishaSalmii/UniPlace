@@ -1,0 +1,116 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>EngineClient.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">UniPlace Portal</a> &gt; <a href="index.source.html" class="el_package">com.halcyon.uniplace.engine</a> &gt; <span class="el_source">EngineClient.java</span></div><h1>EngineClient.java</h1><pre class="source lang-java linenums">package com.halcyon.uniplace.engine;
+
+import com.halcyon.uniplace.engine.EngineDtos.AllowanceRequest;
+import com.halcyon.uniplace.engine.EngineDtos.AllowanceResult;
+import com.halcyon.uniplace.engine.EngineDtos.EligibilityRequest;
+import com.halcyon.uniplace.engine.EngineDtos.EligibilityResult;
+import com.halcyon.uniplace.engine.EngineDtos.MatchRequest;
+import com.halcyon.uniplace.engine.EngineDtos.MatchResult;
+import com.halcyon.uniplace.engine.EngineDtos.RankRequest;
+import com.halcyon.uniplace.engine.EngineDtos.RankResult;
+import com.halcyon.uniplace.engine.EngineDtos.SlotRequest;
+import com.halcyon.uniplace.engine.EngineDtos.SlotResult;
+import com.halcyon.uniplace.service.SettingsService;
+import com.fasterxml.jackson.databind.SerializationFeature;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.http.MediaType;
+import org.springframework.http.client.JdkClientHttpRequestFactory;
+import org.springframework.http.converter.json.Jackson2ObjectMapperBuilder;
+import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
+import org.springframework.stereotype.Component;
+import org.springframework.web.client.RestClient;
+import org.springframework.web.client.RestClientException;
+
+import java.net.http.HttpClient;
+import java.time.Duration;
+import java.util.List;
+
+/**
+ * REST client for the Matching and Compliance Engine.
+ */
+@Component
+public class EngineClient {
+
+<span class="fc" id="L35">    private static final Logger log = LoggerFactory.getLogger(EngineClient.class);</span>
+<span class="fc" id="L36">    static final Duration CONNECT_TIMEOUT = Duration.ofSeconds(3);</span>
+<span class="fc" id="L37">    static final Duration READ_TIMEOUT = Duration.ofSeconds(10);</span>
+    /** Dates travel as ISO-8601 text, as the OpenAPI contract requires. */
+<span class="fc" id="L39">    private static final MappingJackson2HttpMessageConverter JSON = new MappingJackson2HttpMessageConverter(</span>
+<span class="fc" id="L40">            Jackson2ObjectMapperBuilder.json()</span>
+<span class="fc" id="L41">                    .featuresToDisable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS)</span>
+<span class="fc" id="L42">                    .build());</span>
+
+    private final RestClient.Builder builder;
+    private final String baseUrl;
+    private final JdkClientHttpRequestFactory requestFactory;
+
+<span class="fc" id="L48">    public EngineClient(RestClient.Builder builder, SettingsService settings) {</span>
+<span class="fc" id="L49">        this.builder = builder;</span>
+<span class="fc" id="L50">        this.baseUrl = settings.engineBaseUrl();</span>
+<span class="fc" id="L51">        HttpClient http = HttpClient.newBuilder()</span>
+<span class="fc" id="L52">                .version(HttpClient.Version.HTTP_1_1)</span>
+<span class="fc" id="L53">                .connectTimeout(CONNECT_TIMEOUT)</span>
+<span class="fc" id="L54">                .build();</span>
+<span class="fc" id="L55">        this.requestFactory = new JdkClientHttpRequestFactory(http);</span>
+<span class="fc" id="L56">        this.requestFactory.setReadTimeout(READ_TIMEOUT);</span>
+<span class="fc" id="L57">    }</span>
+
+    private RestClient client() {
+<span class="fc" id="L60">        return builder.clone()</span>
+<span class="fc" id="L61">                .messageConverters(converters -&gt; {</span>
+<span class="fc" id="L62">                    converters.removeIf(c -&gt; c instanceof MappingJackson2HttpMessageConverter);</span>
+<span class="fc" id="L63">                    converters.add(0, JSON);</span>
+<span class="fc" id="L64">                })</span>
+<span class="fc" id="L65">                .baseUrl(baseUrl)</span>
+<span class="fc" id="L66">                .requestFactory(requestFactory)</span>
+<span class="fc" id="L67">                .build();</span>
+    }
+
+    private &lt;T&gt; T post(String path, Object body, Class&lt;T&gt; type) {
+        try {
+<span class="fc" id="L72">            T result = client().post().uri(path)</span>
+<span class="fc" id="L73">                    .contentType(MediaType.APPLICATION_JSON)</span>
+<span class="fc" id="L74">                    .body(body)</span>
+<span class="fc" id="L75">                    .retrieve()</span>
+<span class="fc" id="L76">                    .body(type);</span>
+<span class="pc bpc" id="L77" title="1 of 2 branches missed.">            if (result == null) {</span>
+<span class="nc" id="L78">                throw new EngineUnavailableException();</span>
+            }
+<span class="fc" id="L80">            return result;</span>
+<span class="fc" id="L81">        } catch (RestClientException ex) {</span>
+<span class="fc" id="L82">            log.warn(&quot;Engine call {} failed: {}&quot;, path, ex.getClass().getSimpleName());</span>
+<span class="fc" id="L83">            throw new EngineUnavailableException();</span>
+        }
+    }
+
+    /** When the Engine cannot be reached the check is skipped, so that students are not blocked. */
+    public EligibilityResult checkEligibility(EligibilityRequest request) {
+        try {
+<span class="fc" id="L90">            return post(&quot;/eligibility&quot;, request, EligibilityResult.class);</span>
+<span class="fc" id="L91">        } catch (EngineUnavailableException ex) {</span>
+<span class="fc" id="L92">            return EligibilityResult.ok();</span>
+        }
+    }
+
+    public MatchResult match(MatchRequest request) {
+        try {
+<span class="fc" id="L98">            return post(&quot;/match&quot;, request, MatchResult.class);</span>
+<span class="nc" id="L99">        } catch (EngineUnavailableException ex) {</span>
+<span class="nc" id="L100">            return new MatchResult(0, List.of(), List.of(), List.of());</span>
+        }
+    }
+
+    public RankResult rank(RankRequest request) {
+<span class="nc" id="L105">        return post(&quot;/rank&quot;, request, RankResult.class);</span>
+    }
+
+    public SlotResult validateSlot(SlotRequest request) {
+<span class="nc" id="L109">        return post(&quot;/schedule/validate&quot;, request, SlotResult.class);</span>
+    }
+
+    public AllowanceResult allowance(AllowanceRequest request) {
+<span class="nc" id="L113">        return post(&quot;/allowance&quot;, request, AllowanceResult.class);</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>
