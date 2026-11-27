@@ -345,3 +345,106 @@ If JAVA_HOME is not configured, set it to your installed JDK folder before runni
 These tests currently fail because they reproduce known security defects.
 
 JaCoCo is skipped because version 0.8.12 has compatibility issues with Java 25.
+
+## Offers, allowance, notifications and AI Assistant tests — Areeg
+
+Requirements: OFF-01 to OFF-07, ADM-01 (offer and allowance settings), NOT-01 to NOT-04, AI-01 to AI-11.
+Case IDs O-01 to O-25 map to requirements in `docs/areej-test-cases.md`; the execution summary is in
+`docs/areej-results.md`; evidence is in `tests/evidence/offers/`. Task issue: #12.
+
+On Windows, set JAVA_HOME for the session if it does not point to JDK 17 or 21, for example:
+
+```powershell
+$env:JAVA_HOME = "C:\Program Files\Eclipse Adoptium\jdk-21.0.13.9-hotspot"
+```
+
+### Portal integration tests (JUnit, no running Portal or Engine needed)
+
+All four classes are in `portal/src/test/java/com/halcyon/uniplace/acceptance/` and use real Spring services
+with an in-memory H2 database. The Engine (and for the AI class, the AI provider client) is mocked, and the
+deadline and agreement classes use a fixed clock.
+
+| Class | Tests | Requirements | Recorded result |
+| --- | --- | --- | --- |
+| `OffersAcceptanceTest` | O01–O08 | OFF-01, OFF-02, OFF-03, USR-05 | 15 Nov 2026: 3 pass, 5 fail (#18, #22–#25) |
+| `OffersDeadlineBoundaryTest` | D01–D07 | OFF-02, ADM-01 | 26 Nov 2026: 5 pass, 2 fail (#18, #23) |
+| `OffersAgreementTest` | G01–G10 | OFF-07, ADM-01 | 27 Nov 2026: 9 pass, 1 fail (#47) |
+| `AiAssistantAcceptanceTest` | I01–I14 | AI-03, AI-06, AI-07, AI-08, AI-10, AI-11 | 27 Nov 2026: 3 pass, 11 fail (#43, #51–#56) |
+
+Windows PowerShell, from the repository root:
+
+```powershell
+Push-Location portal
+.\mvnw.cmd "-Dtest=OffersAcceptanceTest,OffersDeadlineBoundaryTest,OffersAgreementTest,AiAssistantAcceptanceTest" test "-Dmaven.test.failure.ignore=true"
+Pop-Location
+```
+
+macOS/Linux:
+
+```bash
+(cd portal && ./mvnw -Dtest=OffersAcceptanceTest,OffersDeadlineBoundaryTest,OffersAgreementTest,AiAssistantAcceptanceTest test -Dmaven.test.failure.ignore=true)
+```
+
+To run one class, put only its name after `-Dtest=`. Results are in `portal/target/surefire-reports/`.
+Preserved evidence: `junit-OffersAcceptanceTest-2026-11-15.txt` (and `.xml`),
+`junit-OffersDeadlineBoundaryTest-2026-11-26.txt`, `junit-OffersAgreementTest-2026-11-27.txt`,
+`junit-AiAssistantAcceptanceTest-2026-11-27.txt`.
+
+### Engine API scripts (black-box, Engine must be running)
+
+Start the system first with `start.cmd --jar` (Windows) or `./start.sh` (macOS/Linux). The scripts use only
+the Python standard library.
+
+| Script | Checks | Requirement | Recorded result |
+| --- | --- | --- | --- |
+| `tests/acceptance/test_engine.py` | E12–E17 (allowance part of E01–E18) | OFF-05 | 15 Nov 2026: 4 pass, 2 fail (#26, #27) |
+| `tests/acceptance/test_allowance_boundaries.py` | A01–A28, independent calculation | OFF-05 (OpenAPI month and rounding rules) | 26 Nov 2026: 20 pass, 8 fail (#26, #27, #39, #40) |
+
+```powershell
+py tests\acceptance\test_engine.py
+py tests\acceptance\test_allowance_boundaries.py
+```
+
+(macOS/Linux: `python3` instead of `py`.) `test_engine.py` writes `evidence/engine-results.txt` and
+`evidence/engine-trace.json` and overwrites them on every run; dated copies are kept in
+`tests/evidence/offers/`. `test_allowance_boundaries.py` writes
+`tests/evidence/offers/allowance-boundaries-<timestamp>.json`.
+
+### Last-seat race (OFF-04, Portal must be running with fresh demo data)
+
+```powershell
+.\start.cmd --jar --reset
+# in a second window, after "Demonstration data loaded":
+py tests\acceptance\test_last_seat_race.py
+```
+
+Two students (application 7 and application 8, posting 8 with one seat) accept at the same moment.
+Reset before every run, because the first run uses up the seat. Each run writes
+`tests/evidence/offers/last-seat-race-<timestamp>.json`. Recorded: 3 runs on 26 Nov 2026, all fail (#38).
+
+### AI Assistant with a fake provider (AI-03, AI-05, AI-06, AI-07)
+
+`tests/acceptance/fake_ai_provider.py` is a local stand-in for an OpenAI-compatible provider on
+`http://127.0.0.1:9999/v1`. It records every request and answers in one mode:
+`capture` (valid answer), `slow` (answers after 30 s) or `invalid` (score 150, 6 strengths).
+
+1. Start the Portal (`.\start.cmd --jar --reset`), then in a second window: `py tests\acceptance\fake_ai_provider.py capture`
+2. As coordinator, Settings: AI provider "Other OpenAI-compatible endpoint", base URL `http://127.0.0.1:9999/v1`,
+   API key `test-key`, AI model name `fake-model-1`, Save.
+3. As a student, open an open posting, paste a letter from `ai-eval/letters.json` and click
+   "Get feedback on my letter". Use a different posting for each mode (results are cached for 10 minutes).
+4. Stop with Ctrl+C and repeat with `slow` and `invalid`.
+5. Restore Settings: AI provider OpenAI, empty base URL and model, tick Remove for the API key.
+
+Requests are appended to `tests/evidence/offers/ai-fake-provider-<mode>.jsonl`. Recorded on 27 Nov 2026:
+all 3 modes fail (#51, #55, #56, #57). These are fake-provider results, not real-model results.
+
+### Manual checks and not run
+
+Manual checks on the running Portal (offer boundaries, settings, expiry, statement access, agreement date,
+Outbox notifications and reminders) are described step by step in `docs/areej-test-cases.md`
+(O-02 to O-05, O-07, O-13, O-14, O-18, O-19). Not run: O-15 (timing) and O-25 (real-model AI evaluation,
+AI-04 and AI-09), because no real API key was available.
+
+
+
