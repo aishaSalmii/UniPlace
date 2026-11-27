@@ -92,11 +92,12 @@ including how we checked, changed or rejected the output.
 
 API keys, credentials and portal/data will not be committed.
 
+
 ## Changes along the way (date, what changed, why)
 
 | Date | What changed | Why |
 | --- | --- | --- |
 | 13 November 2026 | Created the initial strategy and assigned three primary modules. | Establish responsibilities and prioritize testing risks. |
+| 27 November 2026 | Completed Users and Security test design with 12 test cases, added automated regression tests for password validation, authorization and CSRF protection, and merged the changes through PR #41. | Document confirmed security defects, improve regression coverage and keep the test evidence linked to requirements. |
 
-We will add dated changes as testing progresses and explain
-the evidence or feedback behind each change.
+We will add dated changes as testing progresses and explain the evidence or feedback behind each change.
