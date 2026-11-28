@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>Student.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">UniPlace Portal</a> &gt; <a href="index.source.html" class="el_package">com.halcyon.uniplace.domain</a> &gt; <span class="el_source">Student.java</span></div><h1>Student.java</h1><pre class="source lang-java linenums">package com.halcyon.uniplace.domain;
+
+import jakarta.persistence.CollectionTable;
+import jakarta.persistence.Column;
+import jakarta.persistence.ElementCollection;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.OrderColumn;
+import jakarta.persistence.Table;
+
+import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.List;
+
+@Entity
+@Table(name = &quot;students&quot;)
+public class Student {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    @Column(nullable = false, unique = true, length = 8)
+    private String studentNumber;
+
+    @Column(nullable = false, length = 120)
+    private String fullName;
+
+    @Column(nullable = false, length = 120)
+    private String email;
+
+    @Column(nullable = false, length = 80)
+    private String program;
+
+    @Column(nullable = false, precision = 3, scale = 2)
+    private BigDecimal gpa;
+
+    private int creditsCompleted;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 20)
+    private Standing standing;
+
+<span class="fc" id="L50">    @ElementCollection(fetch = FetchType.EAGER)</span>
+    @CollectionTable(name = &quot;student_skills&quot;, joinColumns = @JoinColumn(name = &quot;student_id&quot;))
+    @OrderColumn(name = &quot;position&quot;)
+    @Column(name = &quot;skill&quot;, length = 60)
+    private List&lt;String&gt; skills = new ArrayList&lt;&gt;();
+
+    private int priorInternships;
+
+<span class="fc" id="L58">    protected Student() {</span>
+<span class="fc" id="L59">    }</span>
+
+    public Student(String studentNumber, String fullName, String email, String program, BigDecimal gpa,
+<span class="fc" id="L62">                   int creditsCompleted, int priorInternships) {</span>
+<span class="fc" id="L63">        this.studentNumber = studentNumber;</span>
+<span class="fc" id="L64">        this.fullName = fullName;</span>
+<span class="fc" id="L65">        this.email = email;</span>
+<span class="fc" id="L66">        this.program = program;</span>
+<span class="fc" id="L67">        this.gpa = gpa;</span>
+<span class="fc" id="L68">        this.creditsCompleted = creditsCompleted;</span>
+<span class="fc" id="L69">        this.priorInternships = priorInternships;</span>
+<span class="fc" id="L70">        this.standing = Standing.fromGpa(gpa);</span>
+<span class="fc" id="L71">    }</span>
+
+<span class="fc" id="L73">    public Long getId() { return id; }</span>
+<span class="fc" id="L74">    public String getStudentNumber() { return studentNumber; }</span>
+<span class="nc" id="L75">    public void setStudentNumber(String studentNumber) { this.studentNumber = studentNumber; }</span>
+<span class="fc" id="L76">    public String getFullName() { return fullName; }</span>
+<span class="fc" id="L77">    public void setFullName(String fullName) { this.fullName = fullName; }</span>
+<span class="fc" id="L78">    public String getEmail() { return email; }</span>
+<span class="fc" id="L79">    public void setEmail(String email) { this.email = email; }</span>
+<span class="fc" id="L80">    public String getProgram() { return program; }</span>
+<span class="nc" id="L81">    public void setProgram(String program) { this.program = program; }</span>
+<span class="fc" id="L82">    public BigDecimal getGpa() { return gpa; }</span>
+<span class="nc" id="L83">    public void setGpa(BigDecimal gpa) { this.gpa = gpa; }</span>
+<span class="fc" id="L84">    public int getCreditsCompleted() { return creditsCompleted; }</span>
+<span class="nc" id="L85">    public void setCreditsCompleted(int creditsCompleted) { this.creditsCompleted = creditsCompleted; }</span>
+<span class="fc" id="L86">    public Standing getStanding() { return standing; }</span>
+<span class="nc" id="L87">    public void setStanding(Standing standing) { this.standing = standing; }</span>
+<span class="fc" id="L88">    public List&lt;String&gt; getSkills() { return skills; }</span>
+<span class="fc" id="L89">    public void setSkills(List&lt;String&gt; skills) { this.skills = skills; }</span>
+<span class="nc" id="L90">    public int getPriorInternships() { return priorInternships; }</span>
+<span class="nc" id="L91">    public void setPriorInternships(int priorInternships) { this.priorInternships = priorInternships; }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

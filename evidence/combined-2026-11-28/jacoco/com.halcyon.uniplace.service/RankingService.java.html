@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>RankingService.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">UniPlace Portal</a> &gt; <a href="index.source.html" class="el_package">com.halcyon.uniplace.service</a> &gt; <span class="el_source">RankingService.java</span></div><h1>RankingService.java</h1><pre class="source lang-java linenums">package com.halcyon.uniplace.service;
+
+import com.halcyon.uniplace.domain.Application;
+import com.halcyon.uniplace.domain.ApplicationState;
+import com.halcyon.uniplace.domain.Posting;
+import com.halcyon.uniplace.engine.EngineClient;
+import com.halcyon.uniplace.engine.EngineDtos.RankRequest;
+import com.halcyon.uniplace.engine.EngineDtos.RankResult;
+import com.halcyon.uniplace.engine.EngineRequestMapper;
+import com.halcyon.uniplace.repository.ApplicationRepository;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
+/** APP-09: candidate ranking for a posting, computed by the Engine. */
+@Service
+public class RankingService {
+
+    public static final int MAX_CANDIDATES = 500;
+
+    private final ApplicationRepository applications;
+    private final EngineClient engine;
+    private final EngineRequestMapper mapper;
+
+<span class="fc" id="L31">    public RankingService(ApplicationRepository applications, EngineClient engine, EngineRequestMapper mapper) {</span>
+<span class="fc" id="L32">        this.applications = applications;</span>
+<span class="fc" id="L33">        this.engine = engine;</span>
+<span class="fc" id="L34">        this.mapper = mapper;</span>
+<span class="fc" id="L35">    }</span>
+
+<span class="fc" id="L37">    public record RankedCandidate(int rank, Application application, boolean aboveCut) {</span>
+    }
+
+    @Transactional(readOnly = true)
+    public List&lt;RankedCandidate&gt; rank(Posting posting) {
+<span class="fc" id="L42">        List&lt;Application&gt; active = applications.findByPostingAndStateInOrderBySubmittedAtAsc(posting,</span>
+                ApplicationState.ACTIVE);
+<span class="fc bfc" id="L44" title="All 2 branches covered.">        if (active.isEmpty()) {</span>
+<span class="fc" id="L45">            return List.of();</span>
+        }
+<span class="pc bpc" id="L47" title="1 of 2 branches missed.">        if (active.size() &gt; MAX_CANDIDATES) {</span>
+<span class="nc" id="L48">            throw new BusinessRuleException(&quot;This posting has more than &quot; + MAX_CANDIDATES</span>
+                    + &quot; active candidates; filter the list instead.&quot;);
+        }
+<span class="fc" id="L51">        RankRequest request = new RankRequest();</span>
+<span class="fc" id="L52">        request.seats = posting.getSeats();</span>
+<span class="fc" id="L53">        Map&lt;Long, Application&gt; byId = new HashMap&lt;&gt;();</span>
+<span class="fc bfc" id="L54" title="All 2 branches covered.">        for (Application a : active) {</span>
+<span class="fc" id="L55">            request.candidates.add(mapper.toCandidate(a));</span>
+<span class="fc" id="L56">            byId.put(a.getId(), a);</span>
+<span class="fc" id="L57">        }</span>
+<span class="fc" id="L58">        RankResult result = engine.rank(request);</span>
+<span class="fc" id="L59">        Set&lt;Long&gt; cut = new HashSet&lt;&gt;(result.aboveCut());</span>
+<span class="fc" id="L60">        List&lt;RankedCandidate&gt; out = new ArrayList&lt;&gt;();</span>
+<span class="fc" id="L61">        int position = 1;</span>
+<span class="fc bfc" id="L62" title="All 2 branches covered.">        for (Long id : result.ranked()) {</span>
+<span class="fc" id="L63">            Application a = byId.get(id);</span>
+<span class="pc bpc" id="L64" title="1 of 2 branches missed.">            if (a != null) {</span>
+<span class="fc" id="L65">                out.add(new RankedCandidate(position++, a, cut.contains(id)));</span>
+            }
+<span class="fc" id="L67">        }</span>
+<span class="fc" id="L68">        return out;</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

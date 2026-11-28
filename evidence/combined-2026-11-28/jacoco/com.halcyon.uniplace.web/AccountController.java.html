@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>AccountController.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">UniPlace Portal</a> &gt; <a href="index.source.html" class="el_package">com.halcyon.uniplace.web</a> &gt; <span class="el_source">AccountController.java</span></div><h1>AccountController.java</h1><pre class="source lang-java linenums">package com.halcyon.uniplace.web;
+
+import com.halcyon.uniplace.security.CurrentUser;
+import com.halcyon.uniplace.service.BusinessRuleException;
+import com.halcyon.uniplace.service.NotificationService;
+import com.halcyon.uniplace.service.UserService;
+import jakarta.servlet.http.Cookie;
+import jakarta.servlet.http.HttpServletResponse;
+import org.springframework.stereotype.Controller;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+
+@Controller
+public class AccountController {
+
+    private final UserService users;
+    private final NotificationService notifications;
+    private final CurrentUser currentUser;
+
+<span class="fc" id="L24">    public AccountController(UserService users, NotificationService notifications, CurrentUser currentUser) {</span>
+<span class="fc" id="L25">        this.users = users;</span>
+<span class="fc" id="L26">        this.notifications = notifications;</span>
+<span class="fc" id="L27">        this.currentUser = currentUser;</span>
+<span class="fc" id="L28">    }</span>
+
+    @GetMapping(&quot;/account/password&quot;)
+    public String passwordForm() {
+<span class="nc" id="L32">        return &quot;account/password&quot;;</span>
+    }
+
+    @PostMapping(&quot;/account/password&quot;)
+    public String changePassword(@RequestParam String current, @RequestParam String next,
+                                 @RequestParam String confirm, RedirectAttributes ra) {
+<span class="nc bnc" id="L38" title="All 2 branches missed.">        if (!next.equals(confirm)) {</span>
+<span class="nc" id="L39">            ra.addFlashAttribute(&quot;error&quot;, &quot;The new password and its confirmation do not match.&quot;);</span>
+<span class="nc" id="L40">            return &quot;redirect:/account/password&quot;;</span>
+        }
+        try {
+<span class="nc" id="L43">            users.changePassword(currentUser.get(), current, next);</span>
+<span class="nc" id="L44">            ra.addFlashAttribute(&quot;success&quot;, &quot;Password changed.&quot;);</span>
+<span class="nc" id="L45">        } catch (BusinessRuleException ex) {</span>
+<span class="nc" id="L46">            ra.addFlashAttribute(&quot;error&quot;, ex.getMessage());</span>
+<span class="nc" id="L47">        }</span>
+<span class="nc" id="L48">        return &quot;redirect:/account/password&quot;;</span>
+    }
+
+    /** Ends the visit: clears the session cookie in the browser and returns to the login page. */
+    @PostMapping(&quot;/account/logout&quot;)
+    public String logout(HttpServletResponse response) {
+<span class="nc" id="L54">        Cookie cookie = new Cookie(&quot;JSESSIONID&quot;, &quot;&quot;);</span>
+<span class="nc" id="L55">        cookie.setPath(&quot;/&quot;);</span>
+<span class="nc" id="L56">        cookie.setMaxAge(0);</span>
+<span class="nc" id="L57">        response.addCookie(cookie);</span>
+<span class="nc" id="L58">        return &quot;redirect:/login?logout&quot;;</span>
+    }
+
+    /** NOT-03: a user's own notifications. */
+    @GetMapping(&quot;/notifications&quot;)
+    @Transactional(readOnly = true)
+    public String notifications(@RequestParam(defaultValue = &quot;0&quot;) int page, Model model) {
+<span class="nc" id="L65">        model.addAttribute(&quot;page&quot;, notifications.forUser(currentUser.get(), page));</span>
+<span class="nc" id="L66">        model.addAttribute(&quot;all&quot;, false);</span>
+<span class="nc" id="L67">        return &quot;notifications&quot;;</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

@@ -1,0 +1,65 @@
+-------------------------------------------------------------------------------
+Test set: com.halcyon.uniplace.acceptance.OffersAcceptanceTest
+-------------------------------------------------------------------------------
+Tests run: 8, Failures: 5, Errors: 0, Skipped: 0, Time elapsed: 1.429 s <<< FAILURE! -- in com.halcyon.uniplace.acceptance.OffersAcceptanceTest
+com.halcyon.uniplace.acceptance.OffersAcceptanceTest.O05_acceptanceAfterDeadlineIsRefused -- Time elapsed: 0.140 s <<< FAILURE!
+org.opentest4j.AssertionFailedError: Expected com.halcyon.uniplace.service.BusinessRuleException to be thrown, but nothing was thrown.
+	at org.junit.jupiter.api.AssertionFailureBuilder.build(AssertionFailureBuilder.java:152)
+	at org.junit.jupiter.api.AssertThrows.assertThrows(AssertThrows.java:73)
+	at org.junit.jupiter.api.AssertThrows.assertThrows(AssertThrows.java:35)
+	at org.junit.jupiter.api.Assertions.assertThrows(Assertions.java:3115)
+	at com.halcyon.uniplace.acceptance.OffersAcceptanceTest.O05_acceptanceAfterDeadlineIsRefused(OffersAcceptanceTest.java:84)
+	at java.base/java.lang.reflect.Method.invoke(Method.java:580)
+	at java.base/java.util.ArrayList.forEach(ArrayList.java:1596)
+	at java.base/java.util.ArrayList.forEach(ArrayList.java:1596)
+
+com.halcyon.uniplace.acceptance.OffersAcceptanceTest.O04_responseDeadlinePreservesTime -- Time elapsed: 0.017 s <<< FAILURE!
+org.opentest4j.AssertionFailedError: expected: <2026-11-15T14:30> but was: <2026-11-15T00:00>
+	at org.junit.jupiter.api.AssertionFailureBuilder.build(AssertionFailureBuilder.java:151)
+	at org.junit.jupiter.api.AssertionFailureBuilder.buildAndThrow(AssertionFailureBuilder.java:132)
+	at org.junit.jupiter.api.AssertEquals.failNotEqual(AssertEquals.java:197)
+	at org.junit.jupiter.api.AssertEquals.assertEquals(AssertEquals.java:182)
+	at org.junit.jupiter.api.AssertEquals.assertEquals(AssertEquals.java:177)
+	at org.junit.jupiter.api.Assertions.assertEquals(Assertions.java:1145)
+	at com.halcyon.uniplace.acceptance.OffersAcceptanceTest.O04_responseDeadlinePreservesTime(OffersAcceptanceTest.java:74)
+	at java.base/java.lang.reflect.Method.invoke(Method.java:580)
+	at java.base/java.util.ArrayList.forEach(ArrayList.java:1596)
+	at java.base/java.util.ArrayList.forEach(ArrayList.java:1596)
+
+com.halcyon.uniplace.acceptance.OffersAcceptanceTest.O06_acceptanceWithdrawsOtherActiveApplication -- Time elapsed: 0.042 s <<< FAILURE!
+org.opentest4j.AssertionFailedError: expected: <WITHDRAWN> but was: <SUBMITTED>
+	at org.junit.jupiter.api.AssertionFailureBuilder.build(AssertionFailureBuilder.java:151)
+	at org.junit.jupiter.api.AssertionFailureBuilder.buildAndThrow(AssertionFailureBuilder.java:132)
+	at org.junit.jupiter.api.AssertEquals.failNotEqual(AssertEquals.java:197)
+	at org.junit.jupiter.api.AssertEquals.assertEquals(AssertEquals.java:182)
+	at org.junit.jupiter.api.AssertEquals.assertEquals(AssertEquals.java:177)
+	at org.junit.jupiter.api.Assertions.assertEquals(Assertions.java:1145)
+	at com.halcyon.uniplace.acceptance.OffersAcceptanceTest.O06_acceptanceWithdrawsOtherActiveApplication(OffersAcceptanceTest.java:94)
+	at java.base/java.lang.reflect.Method.invoke(Method.java:580)
+	at java.base/java.util.ArrayList.forEach(ArrayList.java:1596)
+	at java.base/java.util.ArrayList.forEach(ArrayList.java:1596)
+
+com.halcyon.uniplace.acceptance.OffersAcceptanceTest.O07_lastSeatRejectsRemainingActiveApplications -- Time elapsed: 0.040 s <<< FAILURE!
+org.opentest4j.AssertionFailedError: expected: <REJECTED> but was: <SUBMITTED>
+	at org.junit.jupiter.api.AssertionFailureBuilder.build(AssertionFailureBuilder.java:151)
+	at org.junit.jupiter.api.AssertionFailureBuilder.buildAndThrow(AssertionFailureBuilder.java:132)
+	at org.junit.jupiter.api.AssertEquals.failNotEqual(AssertEquals.java:197)
+	at org.junit.jupiter.api.AssertEquals.assertEquals(AssertEquals.java:182)
+	at org.junit.jupiter.api.AssertEquals.assertEquals(AssertEquals.java:177)
+	at org.junit.jupiter.api.Assertions.assertEquals(Assertions.java:1145)
+	at com.halcyon.uniplace.acceptance.OffersAcceptanceTest.O07_lastSeatRejectsRemainingActiveApplications(OffersAcceptanceTest.java:106)
+	at java.base/java.lang.reflect.Method.invoke(Method.java:580)
+	at java.base/java.util.ArrayList.forEach(ArrayList.java:1596)
+	at java.base/java.util.ArrayList.forEach(ArrayList.java:1596)
+
+com.halcyon.uniplace.acceptance.OffersAcceptanceTest.O02_submittedApplicationCannotReceiveOffer -- Time elapsed: 0.020 s <<< FAILURE!
+org.opentest4j.AssertionFailedError: Expected com.halcyon.uniplace.service.BusinessRuleException to be thrown, but nothing was thrown.
+	at org.junit.jupiter.api.AssertionFailureBuilder.build(AssertionFailureBuilder.java:152)
+	at org.junit.jupiter.api.AssertThrows.assertThrows(AssertThrows.java:73)
+	at org.junit.jupiter.api.AssertThrows.assertThrows(AssertThrows.java:35)
+	at org.junit.jupiter.api.Assertions.assertThrows(Assertions.java:3115)
+	at com.halcyon.uniplace.acceptance.OffersAcceptanceTest.O02_submittedApplicationCannotReceiveOffer(OffersAcceptanceTest.java:58)
+	at java.base/java.lang.reflect.Method.invoke(Method.java:580)
+	at java.base/java.util.ArrayList.forEach(ArrayList.java:1596)
+	at java.base/java.util.ArrayList.forEach(ArrayList.java:1596)
+

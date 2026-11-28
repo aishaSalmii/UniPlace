@@ -1,0 +1,28 @@
+-------------------------------------------------------------------------------
+Test set: com.halcyon.uniplace.acceptance.OffersDeadlineBoundaryTest
+-------------------------------------------------------------------------------
+Tests run: 7, Failures: 2, Errors: 0, Skipped: 0, Time elapsed: 0.106 s <<< FAILURE! -- in com.halcyon.uniplace.acceptance.OffersDeadlineBoundaryTest
+com.halcyon.uniplace.acceptance.OffersDeadlineBoundaryTest.D07_changedResponseHoursKeepsPartialDays -- Time elapsed: 0.007 s <<< FAILURE!
+org.opentest4j.AssertionFailedError: expected: <2026-11-15T01:00> but was: <2026-11-15T00:00>
+	at org.junit.jupiter.api.AssertionFailureBuilder.build(AssertionFailureBuilder.java:151)
+	at org.junit.jupiter.api.AssertionFailureBuilder.buildAndThrow(AssertionFailureBuilder.java:132)
+	at org.junit.jupiter.api.AssertEquals.failNotEqual(AssertEquals.java:197)
+	at org.junit.jupiter.api.AssertEquals.assertEquals(AssertEquals.java:182)
+	at org.junit.jupiter.api.AssertEquals.assertEquals(AssertEquals.java:177)
+	at org.junit.jupiter.api.Assertions.assertEquals(Assertions.java:1145)
+	at com.halcyon.uniplace.acceptance.OffersDeadlineBoundaryTest.D07_changedResponseHoursKeepsPartialDays(OffersDeadlineBoundaryTest.java:130)
+	at java.base/java.lang.reflect.Method.invoke(Method.java:580)
+	at java.base/java.util.ArrayList.forEach(ArrayList.java:1596)
+	at java.base/java.util.ArrayList.forEach(ArrayList.java:1596)
+
+com.halcyon.uniplace.acceptance.OffersDeadlineBoundaryTest.D03_acceptanceOneMinuteAfterDeadlineIsRefused -- Time elapsed: 0.016 s <<< FAILURE!
+org.opentest4j.AssertionFailedError: Expected com.halcyon.uniplace.service.BusinessRuleException to be thrown, but nothing was thrown.
+	at org.junit.jupiter.api.AssertionFailureBuilder.build(AssertionFailureBuilder.java:152)
+	at org.junit.jupiter.api.AssertThrows.assertThrows(AssertThrows.java:73)
+	at org.junit.jupiter.api.AssertThrows.assertThrows(AssertThrows.java:35)
+	at org.junit.jupiter.api.Assertions.assertThrows(Assertions.java:3115)
+	at com.halcyon.uniplace.acceptance.OffersDeadlineBoundaryTest.D03_acceptanceOneMinuteAfterDeadlineIsRefused(OffersDeadlineBoundaryTest.java:96)
+	at java.base/java.lang.reflect.Method.invoke(Method.java:580)
+	at java.base/java.util.ArrayList.forEach(ArrayList.java:1596)
+	at java.base/java.util.ArrayList.forEach(ArrayList.java:1596)
+

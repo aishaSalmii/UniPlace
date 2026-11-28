@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>StudentDocument.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">UniPlace Portal</a> &gt; <a href="index.source.html" class="el_package">com.halcyon.uniplace.domain</a> &gt; <span class="el_source">StudentDocument.java</span></div><h1>StudentDocument.java</h1><pre class="source lang-java linenums">package com.halcyon.uniplace.domain;
+
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.Table;
+
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+
+@Entity
+@Table(name = &quot;student_documents&quot;)
+public class StudentDocument {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    private Student student;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 20)
+    private DocumentType type;
+
+    @Column(nullable = false, length = 200)
+    private String originalName;
+
+    @Column(nullable = false, length = 80)
+    private String storedName;
+
+    @Column(nullable = false, length = 100)
+    private String mimeType;
+
+    private long sizeBytes;
+
+    private LocalDate issueDate;
+
+    @Column(nullable = false)
+    private LocalDateTime uploadedAt;
+
+<span class="fc" id="L48">    protected StudentDocument() {</span>
+<span class="fc" id="L49">    }</span>
+
+    public StudentDocument(Student student, DocumentType type, String originalName, String storedName,
+<span class="fc" id="L52">                           String mimeType, long sizeBytes, LocalDate issueDate, LocalDateTime uploadedAt) {</span>
+<span class="fc" id="L53">        this.student = student;</span>
+<span class="fc" id="L54">        this.type = type;</span>
+<span class="fc" id="L55">        this.originalName = originalName;</span>
+<span class="fc" id="L56">        this.storedName = storedName;</span>
+<span class="fc" id="L57">        this.mimeType = mimeType;</span>
+<span class="fc" id="L58">        this.sizeBytes = sizeBytes;</span>
+<span class="fc" id="L59">        this.issueDate = issueDate;</span>
+<span class="fc" id="L60">        this.uploadedAt = uploadedAt;</span>
+<span class="fc" id="L61">    }</span>
+
+<span class="nc" id="L63">    public Long getId() { return id; }</span>
+<span class="nc" id="L64">    public Student getStudent() { return student; }</span>
+<span class="fc" id="L65">    public DocumentType getType() { return type; }</span>
+<span class="fc" id="L66">    public String getOriginalName() { return originalName; }</span>
+<span class="fc" id="L67">    public String getStoredName() { return storedName; }</span>
+<span class="fc" id="L68">    public String getMimeType() { return mimeType; }</span>
+<span class="fc" id="L69">    public long getSizeBytes() { return sizeBytes; }</span>
+<span class="fc" id="L70">    public LocalDate getIssueDate() { return issueDate; }</span>
+<span class="nc" id="L71">    public LocalDateTime getUploadedAt() { return uploadedAt; }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

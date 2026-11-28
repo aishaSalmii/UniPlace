@@ -1,0 +1,285 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>OfferService.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">UniPlace Portal</a> &gt; <a href="index.source.html" class="el_package">com.halcyon.uniplace.service</a> &gt; <span class="el_source">OfferService.java</span></div><h1>OfferService.java</h1><pre class="source lang-java linenums">package com.halcyon.uniplace.service;
+
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.halcyon.uniplace.domain.Application;
+import com.halcyon.uniplace.domain.ApplicationState;
+import com.halcyon.uniplace.domain.Offer;
+import com.halcyon.uniplace.domain.OfferStatus;
+import com.halcyon.uniplace.domain.Posting;
+import com.halcyon.uniplace.domain.PostingStatus;
+import com.halcyon.uniplace.domain.Role;
+import com.halcyon.uniplace.domain.User;
+import com.halcyon.uniplace.engine.EngineClient;
+import com.halcyon.uniplace.engine.EngineDtos.AllowanceLine;
+import com.halcyon.uniplace.engine.EngineDtos.AllowanceResult;
+import com.halcyon.uniplace.engine.EngineRequestMapper;
+import com.halcyon.uniplace.engine.EngineUnavailableException;
+import com.halcyon.uniplace.repository.ApplicationRepository;
+import com.halcyon.uniplace.repository.OfferRepository;
+import com.halcyon.uniplace.repository.PostingRepository;
+import com.halcyon.uniplace.repository.UserRepository;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.math.BigDecimal;
+import java.time.Clock;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.time.temporal.ChronoUnit;
+import java.util.Locale;
+import java.util.List;
+
+/** OFF-01 to OFF-07. */
+@Service
+public class OfferService {
+
+<span class="fc" id="L40">    private static final Logger log = LoggerFactory.getLogger(OfferService.class);</span>
+<span class="fc" id="L41">    private static final DateTimeFormatter DISPLAY = DateTimeFormatter.ofPattern(&quot;dd/MM/yyyy HH:mm&quot;);</span>
+<span class="fc" id="L42">    private static final DateTimeFormatter DAY = DateTimeFormatter.ofPattern(&quot;dd/MM/yyyy&quot;);</span>
+
+    private final OfferRepository offers;
+    private final ApplicationRepository applicationRepository;
+    private final PostingRepository postings;
+    private final UserRepository users;
+    private final ApplicationService applications;
+    private final EngineClient engine;
+    private final EngineRequestMapper mapper;
+    private final SettingsService settings;
+    private final NotificationService notifications;
+    private final AccessGuard guard;
+    private final ObjectMapper json;
+    private final Clock clock;
+
+    public OfferService(OfferRepository offers, ApplicationRepository applicationRepository, PostingRepository postings,
+                        UserRepository users, ApplicationService applications, EngineClient engine,
+                        EngineRequestMapper mapper, SettingsService settings, NotificationService notifications,
+<span class="fc" id="L60">                        AccessGuard guard, ObjectMapper json, Clock clock) {</span>
+<span class="fc" id="L61">        this.offers = offers;</span>
+<span class="fc" id="L62">        this.applicationRepository = applicationRepository;</span>
+<span class="fc" id="L63">        this.postings = postings;</span>
+<span class="fc" id="L64">        this.users = users;</span>
+<span class="fc" id="L65">        this.applications = applications;</span>
+<span class="fc" id="L66">        this.engine = engine;</span>
+<span class="fc" id="L67">        this.mapper = mapper;</span>
+<span class="fc" id="L68">        this.settings = settings;</span>
+<span class="fc" id="L69">        this.notifications = notifications;</span>
+<span class="fc" id="L70">        this.guard = guard;</span>
+<span class="fc" id="L71">        this.json = json;</span>
+<span class="fc" id="L72">        this.clock = clock;</span>
+<span class="fc" id="L73">    }</span>
+
+    @Transactional(readOnly = true)
+    public Offer get(Long id) {
+<span class="pc" id="L77">        return offers.findById(id).orElseThrow(() -&gt; new NotFoundException(&quot;Offer&quot;));</span>
+    }
+
+    /** OFF-02: the student has until the end of the response window. */
+    public LocalDateTime responseDeadline(LocalDateTime issuedAt) {
+<span class="fc" id="L82">        return issuedAt.toLocalDate().plusDays(settings.offerResponseHours() / 24).atStartOfDay();</span>
+    }
+
+    public OfferForm formFor(Application a) {
+<span class="fc" id="L86">        Posting p = a.getPosting();</span>
+<span class="fc" id="L87">        OfferForm f = new OfferForm();</span>
+<span class="fc" id="L88">        f.setMonthlyAllowance(p.getMonthlyAllowance());</span>
+<span class="fc" id="L89">        f.setStartDate(p.getStartDate());</span>
+<span class="fc" id="L90">        f.setEndDate(p.getEndDate());</span>
+<span class="fc" id="L91">        f.setWeeklyHours(p.getWeeklyHours());</span>
+<span class="fc" id="L92">        return f;</span>
+    }
+
+    @Transactional
+    public Offer issue(User recruiter, Long applicationId, OfferForm form) {
+<span class="fc" id="L97">        Application a = applications.get(applicationId);</span>
+<span class="fc" id="L98">        guard.assertRecruiterOwns(recruiter, a);</span>
+<span class="fc" id="L99">        Posting p = a.getPosting();</span>
+<span class="pc bpc" id="L100" title="3 of 6 branches missed.">        if (form.getMonthlyAllowance() == null || form.getStartDate() == null || form.getEndDate() == null</span>
+<span class="pc bpc" id="L101" title="1 of 2 branches missed.">                || form.getWeeklyHours() == null) {</span>
+<span class="nc" id="L102">            throw new BusinessRuleException(&quot;Enter the allowance, dates and weekly hours.&quot;);</span>
+        }
+<span class="pc bpc" id="L104" title="1 of 4 branches missed.">        if (form.getMonthlyAllowance().signum() &lt; 0 || form.getMonthlyAllowance().compareTo(p.getMonthlyAllowance()) &gt; 0) {</span>
+<span class="fc" id="L105">            throw new BusinessRuleException(&quot;Invalid offer: monthlyAllowance &gt; posting.monthlyAllowance (&quot;</span>
+<span class="fc" id="L106">                    + p.getMonthlyAllowance() + &quot;).&quot;);</span>
+        }
+<span class="pc bpc" id="L108" title="1 of 4 branches missed.">        if (form.getStartDate().isBefore(p.getStartDate()) || form.getEndDate().isAfter(p.getEndDate())</span>
+<span class="pc bpc" id="L109" title="1 of 2 branches missed.">                || form.getEndDate().isBefore(form.getStartDate())) {</span>
+<span class="fc" id="L110">            throw new BusinessRuleException(&quot;Invalid offer: startDate/endDate outside [&quot; + p.getStartDate() + &quot;, &quot;</span>
+<span class="fc" id="L111">                    + p.getEndDate() + &quot;].&quot;);</span>
+        }
+<span class="pc bpc" id="L113" title="2 of 4 branches missed.">        if (form.getWeeklyHours() &lt; 10 || form.getWeeklyHours() &gt; 40) {</span>
+<span class="nc" id="L114">            throw new BusinessRuleException(&quot;Invalid offer: weeklyHours not in [10, 40].&quot;);</span>
+        }
+<span class="pc bpc" id="L116" title="1 of 2 branches missed.">        if (offers.findByApplication(a).isPresent()) {</span>
+<span class="nc" id="L117">            throw new BusinessRuleException(&quot;An offer was already issued for this application.&quot;);</span>
+        }
+<span class="fc" id="L119">        applications.assertNotFrozen(a);</span>
+<span class="fc" id="L120">        LocalDateTime now = LocalDateTime.now(clock);</span>
+<span class="fc" id="L121">        a.setState(ApplicationState.OFFERED);</span>
+<span class="fc" id="L122">        a.setUpdatedAt(now);</span>
+<span class="fc" id="L123">        Offer offer = offers.save(new Offer(a, form.getMonthlyAllowance(), form.getStartDate(), form.getEndDate(),</span>
+<span class="fc" id="L124">                form.getWeeklyHours(), now, responseDeadline(now)));</span>
+<span class="fc" id="L125">        applications.notifyStudent(a, &quot;Offer received: &quot; + p.getTitle(),</span>
+<span class="fc" id="L126">                p.getCompany().getName() + &quot; offers you the &quot; + p.getTitle() + &quot; internship. Please answer by &quot;</span>
+<span class="fc" id="L127">                        + offer.getRespondBy().format(DISPLAY) + &quot;.&quot;);</span>
+<span class="fc" id="L128">        return offer;</span>
+    }
+
+    /**
+     * OFF-03 and OFF-04.
+     */
+    @Transactional
+    public Offer accept(User student, Long offerId) {
+<span class="fc" id="L136">        Offer offer = get(offerId);</span>
+<span class="fc" id="L137">        Application a = applications.get(offer.getApplication().getId());</span>
+<span class="fc" id="L138">        guard.assertStudentOwns(student, a);</span>
+<span class="pc bpc" id="L139" title="1 of 2 branches missed.">        if (offer.getStatus() != OfferStatus.PENDING) {</span>
+<span class="nc" id="L140">            throw new BusinessRuleException(&quot;This offer is &quot; + offer.getStatus().name().toLowerCase() + &quot;.&quot;);</span>
+        }
+<span class="fc" id="L142">        LocalDateTime now = LocalDateTime.now(clock);</span>
+<span class="fc" id="L143">        applications.assertNotFrozen(a);</span>
+<span class="fc" id="L144">        Posting posting = a.getPosting();</span>
+<span class="pc bpc" id="L145" title="1 of 2 branches missed.">        if (posting.seatsLeft() &lt;= 0) {</span>
+<span class="nc" id="L146">            throw new BusinessRuleException(&quot;All seats of &quot; + posting.getTitle() + &quot; are already taken.&quot;);</span>
+        }
+<span class="fc" id="L148">        posting.setSeatsTaken(posting.getSeatsTaken() + 1);</span>
+<span class="fc" id="L149">        offer.setStatus(OfferStatus.ACCEPTED);</span>
+<span class="fc" id="L150">        offer.setRespondedAt(now);</span>
+<span class="fc" id="L151">        applications.move(a, ApplicationState.ACCEPTED);</span>
+
+<span class="fc bfc" id="L153" title="All 2 branches covered.">        if (posting.seatsLeft() == 0) {</span>
+<span class="fc" id="L154">            posting.setStatus(PostingStatus.FILLED);</span>
+        }
+
+<span class="fc" id="L157">        tryComputeAllowance(offer, 0);</span>
+<span class="fc" id="L158">        applications.notifyStudent(a, &quot;Offer accepted: &quot; + posting.getTitle(),</span>
+<span class="fc" id="L159">                &quot;You accepted the &quot; + posting.getTitle() + &quot; internship at &quot; + posting.getCompany().getName() + &quot;.&quot;);</span>
+<span class="fc" id="L160">        notifyRecruiters(posting, &quot;Offer accepted: &quot; + posting.getTitle(),</span>
+<span class="fc" id="L161">                a.getStudent().getFullName() + &quot; accepted the offer for &quot; + posting.getTitle() + &quot; at &quot;</span>
+<span class="fc" id="L162">                        + posting.getCompany().getName() + &quot;.&quot;);</span>
+<span class="fc" id="L163">        return offer;</span>
+    }
+
+    @Transactional
+    public Offer decline(User student, Long offerId) {
+<span class="fc" id="L168">        Offer offer = get(offerId);</span>
+<span class="fc" id="L169">        Application a = applications.get(offer.getApplication().getId());</span>
+<span class="fc" id="L170">        guard.assertStudentOwns(student, a);</span>
+<span class="pc bpc" id="L171" title="1 of 2 branches missed.">        if (offer.getStatus() != OfferStatus.PENDING) {</span>
+<span class="nc" id="L172">            throw new BusinessRuleException(&quot;This offer is &quot; + offer.getStatus().name().toLowerCase() + &quot;.&quot;);</span>
+        }
+<span class="fc" id="L174">        offer.setStatus(OfferStatus.DECLINED);</span>
+<span class="fc" id="L175">        offer.setRespondedAt(LocalDateTime.now(clock));</span>
+<span class="fc" id="L176">        applications.transition(a, ApplicationState.REJECTED);</span>
+<span class="fc" id="L177">        notifyRecruiters(a.getPosting(), &quot;Offer declined: &quot; + a.getPosting().getTitle(),</span>
+<span class="fc" id="L178">                a.getStudent().getFullName() + &quot; declined the offer for &quot; + a.getPosting().getTitle() + &quot; at &quot;</span>
+<span class="fc" id="L179">                        + a.getPosting().getCompany().getName() + &quot;.&quot;);</span>
+<span class="fc" id="L180">        return offer;</span>
+    }
+
+    /** OFF-05 and OFF-07: recomputes the statement once the agreement date is known. */
+    @Transactional
+    public Offer recordAgreement(Long applicationId, java.time.LocalDate receivedOn) {
+<span class="fc" id="L186">        Application a = applications.recordAgreement(applicationId, receivedOn);</span>
+<span class="pc" id="L187">        Offer offer = offers.findByApplication(a).orElseThrow(() -&gt; new NotFoundException(&quot;Offer&quot;));</span>
+<span class="fc" id="L188">        int lateDays = (int) Math.max(0, ChronoUnit.DAYS.between(offer.getStartDate(), receivedOn));</span>
+<span class="fc" id="L189">        computeAllowance(offer, lateDays);</span>
+<span class="fc" id="L190">        return offer;</span>
+    }
+
+    @Transactional
+    public Offer recalculate(Long offerId) {
+<span class="fc" id="L195">        Offer offer = get(offerId);</span>
+<span class="pc bpc" id="L196" title="1 of 2 branches missed.">        if (offer.getStatus() != OfferStatus.ACCEPTED) {</span>
+<span class="nc" id="L197">            throw new BusinessRuleException(&quot;The statement exists only for accepted offers.&quot;);</span>
+        }
+<span class="fc" id="L199">        Application a = offer.getApplication();</span>
+<span class="pc bpc" id="L200" title="1 of 2 branches missed.">        int lateDays = a.getAgreementReceivedOn() == null ? 0</span>
+<span class="pc" id="L201">                : (int) Math.max(0, ChronoUnit.DAYS.between(offer.getStartDate(), a.getAgreementReceivedOn()));</span>
+<span class="fc" id="L202">        computeAllowance(offer, lateDays);</span>
+<span class="fc" id="L203">        return offer;</span>
+    }
+
+    void computeAllowance(Offer offer, int lateDays) {
+<span class="fc" id="L207">        AllowanceResult result = engine.allowance(mapper.toAllowanceRequest(offer, lateDays));</span>
+<span class="fc" id="L208">        offer.setAllowanceTotal(result.total());</span>
+        try {
+<span class="fc" id="L210">            offer.setAllowanceLines(json.writeValueAsString(result.lines()));</span>
+<span class="nc" id="L211">        } catch (JsonProcessingException ex) {</span>
+<span class="nc" id="L212">            throw new IllegalStateException(ex);</span>
+<span class="fc" id="L213">        }</span>
+<span class="fc" id="L214">    }</span>
+
+    private void tryComputeAllowance(Offer offer, int lateDays) {
+        try {
+<span class="fc" id="L218">            computeAllowance(offer, lateDays);</span>
+<span class="nc" id="L219">        } catch (EngineUnavailableException ex) {</span>
+<span class="nc" id="L220">            offer.setAllowanceTotal(null);</span>
+<span class="nc" id="L221">            offer.setAllowanceLines(null);</span>
+<span class="nc" id="L222">            log.warn(&quot;Allowance for offer {} not computed: matching service unavailable&quot;, offer.getId());</span>
+<span class="fc" id="L223">        }</span>
+<span class="fc" id="L224">    }</span>
+
+    public List&lt;AllowanceLine&gt; linesOf(Offer offer) {
+<span class="pc bpc" id="L227" title="3 of 4 branches missed.">        if (offer == null || offer.getAllowanceLines() == null) {</span>
+<span class="fc" id="L228">            return List.of();</span>
+        }
+        try {
+<span class="nc" id="L231">            return json.readValue(offer.getAllowanceLines(), new TypeReference&lt;List&lt;AllowanceLine&gt;&gt;() { });</span>
+<span class="nc" id="L232">        } catch (JsonProcessingException ex) {</span>
+<span class="nc" id="L233">            return List.of();</span>
+        }
+    }
+
+    /** OFF-02: expires unanswered offers. */
+    @Transactional
+    public int expireOverdue() {
+<span class="fc" id="L240">        LocalDateTime now = LocalDateTime.now(clock);</span>
+<span class="fc" id="L241">        List&lt;Offer&gt; overdue = offers.findByStatusAndRespondByBefore(OfferStatus.PENDING, now);</span>
+<span class="fc bfc" id="L242" title="All 2 branches covered.">        for (Offer o : overdue) {</span>
+<span class="fc" id="L243">            o.setStatus(OfferStatus.EXPIRED);</span>
+<span class="fc" id="L244">            Application a = o.getApplication();</span>
+<span class="pc bpc" id="L245" title="1 of 2 branches missed.">            if (a.getState() == ApplicationState.OFFERED) {</span>
+<span class="fc" id="L246">                applications.move(a, ApplicationState.WITHDRAWN);</span>
+            }
+<span class="fc" id="L248">            applications.notifyStudent(a, &quot;Offer expired: &quot; + a.getPosting().getTitle(),</span>
+<span class="fc" id="L249">                    &quot;The offer for &quot; + a.getPosting().getTitle() + &quot; at &quot; + a.getPosting().getCompany().getName()</span>
+                            + &quot; expired without an answer.&quot;);
+<span class="fc" id="L251">            notifyRecruiters(a.getPosting(), &quot;Offer expired: &quot; + a.getPosting().getTitle(),</span>
+<span class="fc" id="L252">                    &quot;The offer to &quot; + a.getStudent().getFullName() + &quot; for &quot; + a.getPosting().getTitle() + &quot; at &quot;</span>
+<span class="fc" id="L253">                            + a.getPosting().getCompany().getName() + &quot; expired without an answer.&quot;);</span>
+<span class="fc" id="L254">        }</span>
+<span class="fc" id="L255">        return overdue.size();</span>
+    }
+
+    /** NOT-04: reminder 24 hours before the response deadline. */
+    @Transactional
+    public int sendReminders() {
+<span class="nc" id="L261">        LocalDateTime now = LocalDateTime.now(clock);</span>
+<span class="nc" id="L262">        int sent = 0;</span>
+<span class="nc bnc" id="L263" title="All 2 branches missed.">        for (Offer o : offers.findByStatusAndReminderSentFalse(OfferStatus.PENDING)) {</span>
+<span class="nc bnc" id="L264" title="All 4 branches missed.">            if (!now.isBefore(o.getRespondBy().minusHours(24)) &amp;&amp; now.isBefore(o.getRespondBy())) {</span>
+<span class="nc" id="L265">                Application a = o.getApplication();</span>
+<span class="nc" id="L266">                applications.notifyStudent(a, &quot;Reminder: answer your offer for &quot; + a.getPosting().getTitle(),</span>
+<span class="nc" id="L267">                        &quot;The offer for &quot; + a.getPosting().getTitle() + &quot; at &quot; + a.getPosting().getCompany().getName()</span>
+<span class="nc" id="L268">                                + &quot; expires on &quot; + o.getRespondBy().format(DISPLAY) + &quot;.&quot;);</span>
+<span class="nc" id="L269">                sent++;</span>
+            }
+<span class="nc" id="L271">        }</span>
+<span class="nc" id="L272">        return sent;</span>
+    }
+
+    private void notifyRecruiters(Posting posting, String subject, String body) {
+<span class="fc bfc" id="L276" title="All 2 branches covered.">        for (User r : users.findByCompanyAndRole(posting.getCompany(), Role.RECRUITER)) {</span>
+<span class="fc" id="L277">            notifications.notify(r, subject, body);</span>
+<span class="fc" id="L278">        }</span>
+<span class="fc" id="L279">    }</span>
+
+    public BigDecimal totalOf(Offer offer) {
+<span class="nc bnc" id="L282" title="All 2 branches missed.">        return offer == null ? null : offer.getAllowanceTotal();</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

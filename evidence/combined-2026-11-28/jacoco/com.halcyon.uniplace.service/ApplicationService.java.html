@@ -1,0 +1,276 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>ApplicationService.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">UniPlace Portal</a> &gt; <a href="index.source.html" class="el_package">com.halcyon.uniplace.service</a> &gt; <span class="el_source">ApplicationService.java</span></div><h1>ApplicationService.java</h1><pre class="source lang-java linenums">package com.halcyon.uniplace.service;
+
+import com.halcyon.uniplace.domain.Application;
+import com.halcyon.uniplace.domain.ApplicationState;
+import com.halcyon.uniplace.domain.CompanyStatus;
+import com.halcyon.uniplace.domain.Offer;
+import com.halcyon.uniplace.domain.OfferStatus;
+import com.halcyon.uniplace.domain.Posting;
+import com.halcyon.uniplace.domain.Role;
+import com.halcyon.uniplace.domain.Student;
+import com.halcyon.uniplace.domain.User;
+import com.halcyon.uniplace.engine.EngineClient;
+import com.halcyon.uniplace.engine.EngineDtos.EligibilityResult;
+import com.halcyon.uniplace.engine.EngineRequestMapper;
+import com.halcyon.uniplace.engine.MatchScoreService;
+import com.halcyon.uniplace.repository.ApplicationRepository;
+import com.halcyon.uniplace.repository.OfferRepository;
+import com.halcyon.uniplace.repository.PostingRepository;
+import com.halcyon.uniplace.repository.StudentRepository;
+import com.halcyon.uniplace.repository.UserRepository;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.time.Clock;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.util.Comparator;
+import java.util.List;
+
+@Service
+public class ApplicationService {
+
+    public static final int PAGE_SIZE = 20;
+    public static final int MIN_LETTER = 100;
+    public static final int MAX_LETTER = 2000;
+
+    private final ApplicationRepository applications;
+    private final StudentRepository students;
+    private final PostingRepository postings;
+    private final OfferRepository offers;
+    private final UserRepository users;
+    private final PostingService postingService;
+    private final DocumentService documents;
+    private final EngineClient engine;
+    private final EngineRequestMapper mapper;
+    private final MatchScoreService matchScores;
+    private final SettingsService settings;
+    private final NotificationService notifications;
+    private final AuditService audit;
+    private final AccessGuard guard;
+    private final Clock clock;
+
+    public ApplicationService(ApplicationRepository applications, StudentRepository students,
+                              PostingRepository postings, OfferRepository offers, UserRepository users,
+                              PostingService postingService, DocumentService documents, EngineClient engine,
+                              EngineRequestMapper mapper, MatchScoreService matchScores, SettingsService settings,
+<span class="fc" id="L62">                              NotificationService notifications, AuditService audit, AccessGuard guard, Clock clock) {</span>
+<span class="fc" id="L63">        this.applications = applications;</span>
+<span class="fc" id="L64">        this.students = students;</span>
+<span class="fc" id="L65">        this.postings = postings;</span>
+<span class="fc" id="L66">        this.offers = offers;</span>
+<span class="fc" id="L67">        this.users = users;</span>
+<span class="fc" id="L68">        this.postingService = postingService;</span>
+<span class="fc" id="L69">        this.documents = documents;</span>
+<span class="fc" id="L70">        this.engine = engine;</span>
+<span class="fc" id="L71">        this.mapper = mapper;</span>
+<span class="fc" id="L72">        this.matchScores = matchScores;</span>
+<span class="fc" id="L73">        this.settings = settings;</span>
+<span class="fc" id="L74">        this.notifications = notifications;</span>
+<span class="fc" id="L75">        this.audit = audit;</span>
+<span class="fc" id="L76">        this.guard = guard;</span>
+<span class="fc" id="L77">        this.clock = clock;</span>
+<span class="fc" id="L78">    }</span>
+
+    // ------------------------------------------------------------------ queries
+
+    @Transactional(readOnly = true)
+    public Application get(Long id) {
+<span class="pc" id="L84">        return applications.findDetailed(id).orElseThrow(() -&gt; new NotFoundException(&quot;Application&quot;));</span>
+    }
+
+    /** APP-02: applications that count against the student's limit. */
+    @Transactional(readOnly = true)
+    public long countActive(Student student) {
+<span class="fc" id="L90">        return applications.countByStudentAndStateNotIn(student,</span>
+<span class="fc" id="L91">                java.util.EnumSet.of(ApplicationState.REJECTED, ApplicationState.ACCEPTED));</span>
+    }
+
+    /** APP-02: the limit depends on academic standing. */
+    public int activeLimitFor(Student student) {
+<span class="pc bpc" id="L96" title="1 of 2 branches missed.">        return &quot;PROBATION&quot;.equals(student.getStanding())</span>
+<span class="nc" id="L97">                ? settings.maxActiveProbation()</span>
+<span class="fc" id="L98">                : settings.maxActiveGood();</span>
+    }
+
+    @Transactional(readOnly = true)
+    public Page&lt;Application&gt; forStudent(Student student, int page) {
+<span class="fc" id="L103">        return applications.findByStudent(student,</span>
+<span class="fc" id="L104">                PageRequest.of(Math.max(0, page), PAGE_SIZE, Sort.by(Sort.Direction.DESC, &quot;submittedAt&quot;, &quot;id&quot;)));</span>
+    }
+
+    @Transactional(readOnly = true)
+    public Page&lt;Application&gt; forRecruiter(User recruiter, ApplicationState state, Long postingId, int page) {
+<span class="nc bnc" id="L109" title="All 2 branches missed.">        if (recruiter.getCompany() == null) {</span>
+<span class="nc" id="L110">            return Page.empty();</span>
+        }
+<span class="nc" id="L112">        return applications.findForCompany(recruiter.getCompany(), state, postingId,</span>
+<span class="nc" id="L113">                PageRequest.of(Math.max(0, page), PAGE_SIZE, Sort.by(Sort.Direction.DESC, &quot;submittedAt&quot;, &quot;id&quot;)));</span>
+    }
+
+    /** APP-10: the coordinator's list. */
+    @Transactional(readOnly = true)
+    public Page&lt;Application&gt; pageForCoordinator(ApplicationState state, Long postingId, Long companyId, int page) {
+<span class="nc" id="L119">        Pageable pageable = PageRequest.of(Math.max(0, page), PAGE_SIZE);</span>
+<span class="nc" id="L120">        List&lt;Application&gt; matching = applications.findAll().stream()</span>
+<span class="nc bnc" id="L121" title="All 4 branches missed.">                .filter(a -&gt; state == null || a.getState() == state)</span>
+<span class="nc bnc" id="L122" title="All 4 branches missed.">                .filter(a -&gt; postingId == null || a.getPosting().getId().equals(postingId))</span>
+<span class="nc bnc" id="L123" title="All 4 branches missed.">                .filter(a -&gt; companyId == null || a.getPosting().getCompany().getId().equals(companyId))</span>
+<span class="nc" id="L124">                .sorted(Comparator.comparing(Application::getSubmittedAt)</span>
+<span class="nc" id="L125">                        .thenComparing(Application::getId).reversed())</span>
+<span class="nc" id="L126">                .toList();</span>
+<span class="nc" id="L127">        int from = Math.min((int) pageable.getOffset(), matching.size());</span>
+<span class="nc" id="L128">        int to = Math.min(from + PAGE_SIZE, matching.size());</span>
+<span class="nc" id="L129">        return new PageImpl&lt;&gt;(matching.subList(from, to), pageable, matching.size());</span>
+    }
+
+    // ----------------------------------------------------------------- commands
+
+    /** APP-01 to APP-05. */
+    @Transactional
+    public Application submit(User user, Long postingId, String letter) {
+<span class="pc bpc" id="L137" title="2 of 4 branches missed.">        if (!user.is(Role.STUDENT) || user.getStudent() == null) {</span>
+<span class="nc" id="L138">            throw new ForbiddenException();</span>
+        }
+<span class="fc" id="L140">        Student student = students.findById(user.getStudent().getId())</span>
+<span class="pc" id="L141">                .orElseThrow(() -&gt; new NotFoundException(&quot;Student&quot;));</span>
+<span class="fc" id="L142">        Posting posting = postingService.get(postingId);</span>
+<span class="fc" id="L143">        LocalDate today = LocalDate.now(clock);</span>
+
+<span class="pc bpc" id="L145" title="1 of 2 branches missed.">        if (!postingService.acceptsApplications(posting, today)) {</span>
+<span class="nc" id="L146">            throw new BusinessRuleException(&quot;This posting is not accepting applications. Its deadline was &quot;</span>
+<span class="nc" id="L147">                    + posting.getDeadline() + &quot;.&quot;);</span>
+        }
+<span class="pc bpc" id="L149" title="1 of 2 branches missed.">        String text = letter == null ? &quot;&quot; : letter.trim();</span>
+<span class="fc bfc" id="L150" title="All 4 branches covered.">        if (text.length() &lt; MIN_LETTER || text.length() &gt; MAX_LETTER) {</span>
+<span class="fc" id="L151">            throw new BusinessRuleException(&quot;The motivation letter must have between &quot; + MIN_LETTER + &quot; and &quot;</span>
+<span class="fc" id="L152">                    + MAX_LETTER + &quot; characters (it has &quot; + text.length() + &quot;).&quot;);</span>
+        }
+<span class="fc bfc" id="L154" title="All 2 branches covered.">        if (applications.existsByStudentAndPostingAndStateNot(student, posting, ApplicationState.WITHDRAWN)) {</span>
+<span class="fc" id="L155">            throw new BusinessRuleException(&quot;You already have an active application for this posting.&quot;);</span>
+        }
+<span class="fc" id="L157">        long active = countActive(student);</span>
+<span class="fc" id="L158">        int limit = activeLimitFor(student);</span>
+<span class="pc bpc" id="L159" title="1 of 2 branches missed.">        if (active &gt;= limit) {</span>
+<span class="nc" id="L160">            throw new BusinessRuleException(&quot;You already have &quot; + active + &quot; active applications, the maximum for &quot;</span>
+<span class="nc" id="L161">                    + &quot;students in &quot; + student.getStanding().name().toLowerCase() + &quot; standing.&quot;);</span>
+        }
+
+<span class="fc" id="L164">        EligibilityResult eligibility = engine.checkEligibility(</span>
+<span class="fc" id="L165">                mapper.toEligibilityRequest(student, posting, documents.forEligibility(student), today));</span>
+<span class="fc bfc" id="L166" title="All 2 branches covered.">        if (!eligibility.eligible()) {</span>
+<span class="fc" id="L167">            throw new NotEligibleException(eligibility.reasons());</span>
+        }
+<span class="fc" id="L169">        int score = matchScores.score(student.getSkills(), posting);</span>
+
+<span class="fc" id="L171">        Application saved = applications.save(new Application(student, posting, text, score, LocalDateTime.now(clock)));</span>
+<span class="fc" id="L172">        notifications.notify(user, &quot;Application submitted: &quot; + posting.getTitle(),</span>
+<span class="fc" id="L173">                &quot;Your application to &quot; + posting.getTitle() + &quot; at &quot; + posting.getCompany().getName()</span>
+                        + &quot; was submitted. Match score: &quot; + score + &quot;.&quot;);
+<span class="fc bfc" id="L175" title="All 2 branches covered.">        for (User recruiter : users.findByCompanyAndRole(posting.getCompany(), Role.RECRUITER)) {</span>
+<span class="fc" id="L176">            notifications.notify(recruiter, &quot;New application: &quot; + posting.getTitle(),</span>
+<span class="fc" id="L177">                    student.getFullName() + &quot; applied to &quot; + posting.getTitle() + &quot; at &quot;</span>
+<span class="fc" id="L178">                            + posting.getCompany().getName() + &quot;.&quot;);</span>
+<span class="fc" id="L179">        }</span>
+<span class="fc" id="L180">        return saved;</span>
+    }
+
+    /** APP-07. */
+    @Transactional
+    public Application shortlist(User recruiter, Long applicationId, String justification) {
+<span class="fc" id="L186">        Application a = get(applicationId);</span>
+<span class="fc" id="L187">        guard.assertRecruiterOwns(recruiter, a);</span>
+<span class="fc" id="L188">        int threshold = settings.shortlistThreshold();</span>
+<span class="fc bfc" id="L189" title="All 2 branches covered.">        boolean override = a.getMatchScore() &lt;= threshold;</span>
+<span class="fc bfc" id="L190" title="All 6 branches covered.">        if (override &amp;&amp; (justification == null || justification.isBlank())) {</span>
+<span class="fc" id="L191">            throw new BusinessRuleException(&quot;The match score &quot; + a.getMatchScore() + &quot; is below the shortlist threshold &quot;</span>
+                    + threshold + &quot;. Give a justification to shortlist it anyway.&quot;);
+        }
+<span class="fc" id="L194">        transition(a, ApplicationState.SHORTLISTED);</span>
+<span class="fc bfc" id="L195" title="All 2 branches covered.">        if (override) {</span>
+<span class="fc" id="L196">            a.setOverrideJustification(justification.trim());</span>
+<span class="fc" id="L197">            audit.record(recruiter.getUsername(), &quot;SHORTLIST_OVERRIDE&quot;, &quot;application &quot; + a.getId(),</span>
+<span class="fc" id="L198">                    &quot;score &quot; + a.getMatchScore() + &quot; &lt; &quot; + threshold, justification.trim());</span>
+        }
+<span class="fc" id="L200">        notifyStudent(a, &quot;Shortlisted: &quot; + a.getPosting().getTitle(),</span>
+<span class="fc" id="L201">                &quot;Your application to &quot; + a.getPosting().getTitle() + &quot; at &quot; + a.getPosting().getCompany().getName()</span>
+                        + &quot; was shortlisted.&quot;);
+<span class="fc" id="L203">        return a;</span>
+    }
+
+    @Transactional
+    public Application reject(User recruiter, Long applicationId) {
+<span class="nc" id="L208">        Application a = get(applicationId);</span>
+<span class="nc" id="L209">        guard.assertRecruiterOwns(recruiter, a);</span>
+<span class="nc" id="L210">        transition(a, ApplicationState.REJECTED);</span>
+<span class="nc bnc" id="L211" title="All 2 branches missed.">        offers.findByApplication(a).filter(o -&gt; o.getStatus() == OfferStatus.PENDING)</span>
+<span class="nc" id="L212">                .ifPresent(o -&gt; o.setStatus(OfferStatus.DECLINED));</span>
+<span class="nc" id="L213">        notifyStudent(a, &quot;Application not selected: &quot; + a.getPosting().getTitle(),</span>
+<span class="nc" id="L214">                &quot;Your application to &quot; + a.getPosting().getTitle() + &quot; at &quot; + a.getPosting().getCompany().getName()</span>
+                        + &quot; was not selected.&quot;);
+<span class="nc" id="L216">        return a;</span>
+    }
+
+    /** APP-08. */
+    @Transactional
+    public Application withdraw(User user, Long applicationId) {
+<span class="fc" id="L222">        Application a = get(applicationId);</span>
+<span class="fc" id="L223">        guard.assertStudentOwns(user, a);</span>
+<span class="fc" id="L224">        assertNotFrozen(a);</span>
+<span class="fc" id="L225">        a.setState(ApplicationState.WITHDRAWN);</span>
+<span class="fc" id="L226">        a.setUpdatedAt(LocalDateTime.now(clock));</span>
+<span class="pc bnc" id="L227" title="All 2 branches missed.">        offers.findByApplication(a).filter(o -&gt; o.getStatus() == OfferStatus.PENDING)</span>
+<span class="pc" id="L228">                .ifPresent(o -&gt; o.setStatus(OfferStatus.DECLINED));</span>
+<span class="fc" id="L229">        return a;</span>
+    }
+
+    /** OFF-07: the coordinator records when the signed placement agreement was received. */
+    @Transactional
+    public Application recordAgreement(Long applicationId, LocalDate receivedOn) {
+<span class="fc" id="L235">        Application a = get(applicationId);</span>
+<span class="pc bpc" id="L236" title="1 of 2 branches missed.">        if (a.getState() != ApplicationState.ACCEPTED) {</span>
+<span class="nc" id="L237">            throw new BusinessRuleException(&quot;The agreement can only be recorded for an accepted placement.&quot;);</span>
+        }
+<span class="pc bpc" id="L239" title="1 of 4 branches missed.">        if (receivedOn == null || receivedOn.isAfter(LocalDate.now(clock))) {</span>
+<span class="fc" id="L240">            throw new BusinessRuleException(&quot;Enter a date that is not in the future.&quot;);</span>
+        }
+<span class="fc" id="L242">        a.setAgreementReceivedOn(receivedOn);</span>
+<span class="fc" id="L243">        return a;</span>
+    }
+
+    // ----------------------------------------------------------------- internals
+
+    /** Moves an application on behalf of a user; refused while the company is not approved (COM-02). */
+    public void transition(Application a, ApplicationState to) {
+<span class="fc" id="L250">        assertNotFrozen(a);</span>
+<span class="fc" id="L251">        move(a, to);</span>
+<span class="fc" id="L252">    }</span>
+
+    /** Moves an application on behalf of the system (automatic withdrawals, expiry, filled posting). */
+    public void move(Application a, ApplicationState to) {
+<span class="fc" id="L256">        ApplicationStateMachine.assertCanMove(a.getState(), to);</span>
+<span class="fc" id="L257">        a.setState(to);</span>
+<span class="fc" id="L258">        a.setUpdatedAt(LocalDateTime.now(clock));</span>
+<span class="fc" id="L259">    }</span>
+
+    public void assertNotFrozen(Application a) {
+<span class="pc bpc" id="L262" title="1 of 2 branches missed.">        if (a.getPosting().getCompany().getStatus() == CompanyStatus.PENDING) {</span>
+<span class="nc" id="L263">            throw new BusinessRuleException(a.getPosting().getCompany().getName()</span>
+                    + &quot; is not approved at the moment; its applications are frozen.&quot;);
+        }
+<span class="fc" id="L266">    }</span>
+
+    public void notifyStudent(Application a, String subject, String body) {
+<span class="fc" id="L269">        users.findByStudent(a.getStudent()).ifPresent(u -&gt; notifications.notify(u, subject, body));</span>
+<span class="fc" id="L270">    }</span>
+
+    public Offer offerOf(Application a) {
+<span class="fc" id="L273">        return offers.findByApplication(a).orElse(null);</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>
