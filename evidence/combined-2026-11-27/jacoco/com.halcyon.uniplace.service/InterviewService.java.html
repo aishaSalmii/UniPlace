@@ -1,0 +1,131 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>InterviewService.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">UniPlace Portal</a> &gt; <a href="index.source.html" class="el_package">com.halcyon.uniplace.service</a> &gt; <span class="el_source">InterviewService.java</span></div><h1>InterviewService.java</h1><pre class="source lang-java linenums">package com.halcyon.uniplace.service;
+
+import com.halcyon.uniplace.domain.Application;
+import com.halcyon.uniplace.domain.ApplicationState;
+import com.halcyon.uniplace.domain.Interview;
+import com.halcyon.uniplace.domain.Role;
+import com.halcyon.uniplace.domain.User;
+import com.halcyon.uniplace.engine.EngineClient;
+import com.halcyon.uniplace.engine.EngineDtos.SlotRequest;
+import com.halcyon.uniplace.engine.EngineDtos.SlotResult;
+import com.halcyon.uniplace.engine.EngineRequestMapper;
+import com.halcyon.uniplace.repository.InterviewRepository;
+import com.halcyon.uniplace.repository.UserRepository;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
+import java.util.List;
+
+/** INT-01 to INT-05. */
+@Service
+public class InterviewService {
+
+<span class="fc" id="L27">    private static final DateTimeFormatter DISPLAY = DateTimeFormatter.ofPattern(&quot;dd/MM/yyyy HH:mm&quot;);</span>
+
+    private final InterviewRepository interviews;
+    private final ApplicationService applications;
+    private final EngineClient engine;
+    private final EngineRequestMapper mapper;
+    private final NotificationService notifications;
+    private final UserRepository users;
+    private final AccessGuard guard;
+
+    public InterviewService(InterviewRepository interviews, ApplicationService applications, EngineClient engine,
+                            EngineRequestMapper mapper, NotificationService notifications, UserRepository users,
+<span class="fc" id="L39">                            AccessGuard guard) {</span>
+<span class="fc" id="L40">        this.interviews = interviews;</span>
+<span class="fc" id="L41">        this.applications = applications;</span>
+<span class="fc" id="L42">        this.engine = engine;</span>
+<span class="fc" id="L43">        this.mapper = mapper;</span>
+<span class="fc" id="L44">        this.notifications = notifications;</span>
+<span class="fc" id="L45">        this.users = users;</span>
+<span class="fc" id="L46">        this.guard = guard;</span>
+<span class="fc" id="L47">    }</span>
+
+    @Transactional(readOnly = true)
+    public List&lt;Interview&gt; forApplication(Application a) {
+<span class="fc" id="L51">        return interviews.findByApplicationOrderByStartAsc(a);</span>
+    }
+
+    @Transactional
+    public Interview schedule(User recruiter, Long applicationId, LocalDate date, LocalTime from, LocalTime to,
+                              String location) {
+<span class="fc" id="L57">        Application a = applications.get(applicationId);</span>
+<span class="fc" id="L58">        guard.assertRecruiterOwns(recruiter, a);</span>
+<span class="pc bpc" id="L59" title="1 of 2 branches missed.">        if (a.getState() != ApplicationState.SHORTLISTED) {</span>
+<span class="nc" id="L60">            throw new BusinessRuleException(&quot;Only a shortlisted application can be invited to an interview.&quot;);</span>
+        }
+<span class="pc bpc" id="L62" title="3 of 6 branches missed.">        if (date == null || from == null || to == null) {</span>
+<span class="nc" id="L63">            throw new BusinessRuleException(&quot;Enter the date, start time and end time.&quot;);</span>
+        }
+<span class="pc bpc" id="L65" title="3 of 6 branches missed.">        if (location == null || location.isBlank() || location.length() &gt; 200) {</span>
+<span class="nc" id="L66">            throw new BusinessRuleException(&quot;Enter the location or meeting link (at most 200 characters).&quot;);</span>
+        }
+<span class="fc" id="L68">        applications.assertNotFrozen(a);</span>
+<span class="fc" id="L69">        LocalDateTime start = date.atTime(from);</span>
+<span class="fc" id="L70">        LocalDateTime end = date.atTime(to);</span>
+<span class="fc bfc" id="L71" title="All 2 branches covered.">        if (!end.isAfter(start)) {</span>
+<span class="fc" id="L72">            throw new BusinessRuleException(&quot;The end time must be after the start time.&quot;);</span>
+        }
+
+<span class="fc" id="L75">        SlotRequest request = new SlotRequest();</span>
+<span class="fc" id="L76">        request.candidate = mapper.toSlot(start, end);</span>
+<span class="fc" id="L77">        request.recruiterSlots = mapper.toSlots(interviews.findByRecruiterAndCancelledFalse(recruiter));</span>
+<span class="fc" id="L78">        request.studentSlots = mapper.toSlots(interviews.findActiveForStudent(a.getStudent()));</span>
+<span class="fc" id="L79">        SlotResult result = engine.validateSlot(request);</span>
+<span class="fc bfc" id="L80" title="All 2 branches covered.">        if (!result.valid()) {</span>
+<span class="fc" id="L81">            throw new BusinessRuleException(&quot;This slot cannot be used: &quot; + String.join(&quot;; &quot;, result.conflicts()) + &quot;.&quot;);</span>
+        }
+
+<span class="fc" id="L84">        Interview interview = interviews.save(new Interview(a, recruiter, start, end, location.trim()));</span>
+<span class="fc" id="L85">        applications.transition(a, ApplicationState.INTERVIEW);</span>
+<span class="fc" id="L86">        a.setRescheduleRequested(false);</span>
+<span class="fc" id="L87">        applications.notifyStudent(a, &quot;Interview scheduled: &quot; + a.getPosting().getTitle(),</span>
+<span class="fc" id="L88">                &quot;Your interview for &quot; + a.getPosting().getTitle() + &quot; at &quot; + a.getPosting().getCompany().getName()</span>
+<span class="fc" id="L89">                        + &quot; is on &quot; + start.format(DISPLAY) + &quot; until &quot; + end.toLocalTime() + &quot;, at &quot; + location.trim() + &quot;.&quot;);</span>
+<span class="fc" id="L90">        return interview;</span>
+    }
+
+    @Transactional
+    public void cancel(User recruiter, Long interviewId) {
+<span class="pc" id="L95">        Interview i = interviews.findById(interviewId).orElseThrow(() -&gt; new NotFoundException(&quot;Interview&quot;));</span>
+<span class="fc" id="L96">        Application a = applications.get(i.getApplication().getId());</span>
+<span class="fc" id="L97">        guard.assertRecruiterOwns(recruiter, a);</span>
+<span class="fc bfc" id="L98" title="All 2 branches covered.">        if (i.isCancelled()) {</span>
+<span class="fc" id="L99">            throw new BusinessRuleException(&quot;This interview is already cancelled.&quot;);</span>
+        }
+<span class="fc bfc" id="L101" title="All 2 branches covered.">        if (a.getState() != ApplicationState.INTERVIEW) {</span>
+<span class="fc" id="L102">            throw new BusinessRuleException(&quot;Only an interview that has not led to an offer can be cancelled.&quot;);</span>
+        }
+<span class="fc" id="L104">        i.setCancelled(true);</span>
+<span class="fc" id="L105">        applications.transition(a, ApplicationState.SHORTLISTED);</span>
+<span class="fc" id="L106">        applications.notifyStudent(a, &quot;Interview cancelled: &quot; + a.getPosting().getTitle(),</span>
+<span class="fc" id="L107">                &quot;Your interview on &quot; + i.getStart().format(DISPLAY) + &quot; for &quot; + a.getPosting().getTitle()</span>
+                        + &quot; was cancelled.&quot;);
+<span class="fc" id="L109">    }</span>
+
+    /** INT-04: one reschedule request per application. */
+    @Transactional
+    public void requestReschedule(User student, Long applicationId, String note) {
+<span class="fc" id="L114">        Application a = applications.get(applicationId);</span>
+<span class="fc" id="L115">        guard.assertStudentOwns(student, a);</span>
+<span class="pc bpc" id="L116" title="1 of 2 branches missed.">        if (a.getState() != ApplicationState.INTERVIEW) {</span>
+<span class="nc" id="L117">            throw new BusinessRuleException(&quot;There is no scheduled interview to reschedule.&quot;);</span>
+        }
+<span class="pc bpc" id="L119" title="1 of 4 branches missed.">        if (a.isRescheduleRequested() || interviews.findByApplicationOrderByStartAsc(a).stream().anyMatch(Interview::isCancelled)) {</span>
+<span class="fc" id="L120">            throw new BusinessRuleException(&quot;A reschedule was already requested for this application.&quot;);</span>
+        }
+<span class="fc" id="L122">        a.setRescheduleRequested(true);</span>
+<span class="pc bpc" id="L123" title="2 of 4 branches missed.">        String reason = note == null || note.isBlank() ? &quot;No reason given.&quot; : note.trim();</span>
+<span class="fc bfc" id="L124" title="All 2 branches covered.">        for (User r : users.findByCompanyAndRole(a.getPosting().getCompany(), Role.RECRUITER)) {</span>
+<span class="fc" id="L125">            notifications.notify(r, &quot;Reschedule requested: &quot; + a.getPosting().getTitle(),</span>
+<span class="fc" id="L126">                    a.getStudent().getFullName() + &quot; asked to reschedule the interview for &quot;</span>
+<span class="fc" id="L127">                            + a.getPosting().getTitle() + &quot; at &quot; + a.getPosting().getCompany().getName() + &quot;. &quot; + reason);</span>
+<span class="fc" id="L128">        }</span>
+<span class="fc" id="L129">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

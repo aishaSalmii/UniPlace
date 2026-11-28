@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>EngineRequestMapper.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">UniPlace Portal</a> &gt; <a href="index.source.html" class="el_package">com.halcyon.uniplace.engine</a> &gt; <span class="el_source">EngineRequestMapper.java</span></div><h1>EngineRequestMapper.java</h1><pre class="source lang-java linenums">package com.halcyon.uniplace.engine;
+
+import com.halcyon.uniplace.domain.Application;
+import com.halcyon.uniplace.domain.Interview;
+import com.halcyon.uniplace.domain.Offer;
+import com.halcyon.uniplace.domain.Posting;
+import com.halcyon.uniplace.domain.Student;
+import com.halcyon.uniplace.domain.StudentDocument;
+import com.halcyon.uniplace.engine.EngineDtos.AllowanceRequest;
+import com.halcyon.uniplace.engine.EngineDtos.DocumentInfo;
+import com.halcyon.uniplace.engine.EngineDtos.EligibilityRequest;
+import com.halcyon.uniplace.engine.EngineDtos.MatchRequest;
+import com.halcyon.uniplace.engine.EngineDtos.RankCandidate;
+import com.halcyon.uniplace.engine.EngineDtos.Slot;
+import com.halcyon.uniplace.service.SettingsService;
+import org.springframework.stereotype.Component;
+
+import java.time.Clock;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
+import java.util.ArrayList;
+import java.util.List;
+
+/** Builds Engine requests from domain objects. */
+@Component
+public class EngineRequestMapper {
+
+    private final SettingsService settings;
+    private final Clock clock;
+
+<span class="fc" id="L32">    public EngineRequestMapper(SettingsService settings, Clock clock) {</span>
+<span class="fc" id="L33">        this.settings = settings;</span>
+<span class="fc" id="L34">        this.clock = clock;</span>
+<span class="fc" id="L35">    }</span>
+
+    public EligibilityRequest toEligibilityRequest(Student student, Posting posting, List&lt;StudentDocument&gt; documents,
+                                                   LocalDate asOf) {
+<span class="fc" id="L39">        EligibilityRequest r = new EligibilityRequest();</span>
+<span class="fc" id="L40">        r.gpa = student.getGpa();</span>
+<span class="fc" id="L41">        r.creditsCompleted = student.getCreditsCompleted();</span>
+<span class="fc" id="L42">        r.standing = student.getStanding().name();</span>
+<span class="fc" id="L43">        r.minGpa = settings.getDecimal(SettingsService.DEFAULT_MIN_GPA);</span>
+<span class="fc" id="L44">        r.minCredits = posting.getMinCredits();</span>
+<span class="fc" id="L45">        r.asOf = asOf;</span>
+<span class="fc bfc" id="L46" title="All 2 branches covered.">        for (StudentDocument d : documents) {</span>
+<span class="fc" id="L47">            DocumentInfo info = new DocumentInfo();</span>
+<span class="fc" id="L48">            info.type = d.getType().name();</span>
+<span class="fc" id="L49">            info.sizeBytes = d.getSizeBytes();</span>
+<span class="fc" id="L50">            info.mimeType = d.getMimeType();</span>
+<span class="fc" id="L51">            info.issueDate = d.getIssueDate();</span>
+<span class="fc" id="L52">            r.documents.add(info);</span>
+<span class="fc" id="L53">        }</span>
+<span class="fc" id="L54">        return r;</span>
+    }
+
+    public MatchRequest toMatchRequest(List&lt;String&gt; studentSkills, Posting posting) {
+<span class="fc" id="L58">        MatchRequest r = new MatchRequest();</span>
+<span class="fc" id="L59">        r.studentSkills = new ArrayList&lt;&gt;(studentSkills);</span>
+<span class="fc" id="L60">        r.requiredSkills = new ArrayList&lt;&gt;(posting.getRequiredSkills());</span>
+<span class="fc" id="L61">        r.niceToHaveSkills = new ArrayList&lt;&gt;(posting.getNiceToHaveSkills());</span>
+<span class="fc" id="L62">        return r;</span>
+    }
+
+    public RankCandidate toCandidate(Application a) {
+<span class="fc" id="L66">        RankCandidate c = new RankCandidate();</span>
+<span class="fc" id="L67">        c.applicationId = a.getId();</span>
+<span class="fc" id="L68">        c.score = a.getMatchScore();</span>
+<span class="fc" id="L69">        c.gpa = a.getStudent().getGpa();</span>
+<span class="fc" id="L70">        c.submittedAt = withOffset(a.getSubmittedAt());</span>
+<span class="fc" id="L71">        return c;</span>
+    }
+
+    public Slot toSlot(LocalDateTime start, LocalDateTime end) {
+<span class="fc" id="L75">        return new Slot(start, end);</span>
+    }
+
+    public List&lt;Slot&gt; toSlots(List&lt;Interview&gt; interviews) {
+<span class="fc" id="L79">        List&lt;Slot&gt; slots = new ArrayList&lt;&gt;();</span>
+<span class="pc bpc" id="L80" title="1 of 2 branches missed.">        for (Interview i : interviews) {</span>
+<span class="nc" id="L81">            slots.add(toSlot(i.getStart(), i.getEnd()));</span>
+<span class="nc" id="L82">        }</span>
+<span class="fc" id="L83">        return slots;</span>
+    }
+
+    public AllowanceRequest toAllowanceRequest(Offer offer, int lateDays) {
+<span class="fc" id="L87">        AllowanceRequest r = new AllowanceRequest();</span>
+<span class="fc" id="L88">        r.monthlyAllowance = offer.getMonthlyAllowance();</span>
+<span class="fc" id="L89">        r.startDate = offer.getStartDate();</span>
+<span class="fc" id="L90">        r.endDate = offer.getEndDate();</span>
+<span class="fc" id="L91">        r.weeklyHours = offer.getWeeklyHours();</span>
+<span class="fc" id="L92">        r.lateDays = lateDays;</span>
+<span class="fc" id="L93">        r.transportSupplement = settings.getDecimal(SettingsService.TRANSPORT_SUPPLEMENT);</span>
+<span class="fc" id="L94">        r.penaltyRate = settings.getDecimal(SettingsService.PENALTY_RATE);</span>
+<span class="fc" id="L95">        r.penaltyCap = settings.getDecimal(SettingsService.PENALTY_CAP);</span>
+<span class="fc" id="L96">        return r;</span>
+    }
+
+    private OffsetDateTime withOffset(LocalDateTime local) {
+<span class="fc" id="L100">        return local.atZone(clock.getZone()).toOffsetDateTime();</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

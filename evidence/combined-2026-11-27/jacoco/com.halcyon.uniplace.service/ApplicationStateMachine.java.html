@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>ApplicationStateMachine.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">UniPlace Portal</a> &gt; <a href="index.source.html" class="el_package">com.halcyon.uniplace.service</a> &gt; <span class="el_source">ApplicationStateMachine.java</span></div><h1>ApplicationStateMachine.java</h1><pre class="source lang-java linenums">package com.halcyon.uniplace.service;
+
+import com.halcyon.uniplace.domain.ApplicationState;
+
+import java.util.EnumMap;
+import java.util.EnumSet;
+import java.util.Map;
+import java.util.Set;
+
+import static com.halcyon.uniplace.domain.ApplicationState.ACCEPTED;
+import static com.halcyon.uniplace.domain.ApplicationState.INTERVIEW;
+import static com.halcyon.uniplace.domain.ApplicationState.OFFERED;
+import static com.halcyon.uniplace.domain.ApplicationState.REJECTED;
+import static com.halcyon.uniplace.domain.ApplicationState.SHORTLISTED;
+import static com.halcyon.uniplace.domain.ApplicationState.SUBMITTED;
+import static com.halcyon.uniplace.domain.ApplicationState.WITHDRAWN;
+
+/** APP-06 and INT-04: the only transitions an application may make. */
+public final class ApplicationStateMachine {
+
+<span class="fc" id="L21">    private static final Map&lt;ApplicationState, Set&lt;ApplicationState&gt;&gt; ALLOWED = new EnumMap&lt;&gt;(ApplicationState.class);</span>
+
+    static {
+<span class="fc" id="L24">        ALLOWED.put(SUBMITTED, EnumSet.of(SHORTLISTED, REJECTED, WITHDRAWN));</span>
+<span class="fc" id="L25">        ALLOWED.put(SHORTLISTED, EnumSet.of(INTERVIEW, REJECTED, WITHDRAWN));</span>
+<span class="fc" id="L26">        ALLOWED.put(INTERVIEW, EnumSet.of(OFFERED, SHORTLISTED, REJECTED, WITHDRAWN));</span>
+<span class="fc" id="L27">        ALLOWED.put(OFFERED, EnumSet.of(ACCEPTED, REJECTED, WITHDRAWN));</span>
+<span class="fc" id="L28">        ALLOWED.put(ACCEPTED, EnumSet.noneOf(ApplicationState.class));</span>
+<span class="fc" id="L29">        ALLOWED.put(REJECTED, EnumSet.noneOf(ApplicationState.class));</span>
+<span class="fc" id="L30">        ALLOWED.put(WITHDRAWN, EnumSet.noneOf(ApplicationState.class));</span>
+<span class="fc" id="L31">    }</span>
+
+    private ApplicationStateMachine() {
+    }
+
+    public static boolean canMove(ApplicationState from, ApplicationState to) {
+<span class="fc" id="L37">        return ALLOWED.get(from).contains(to);</span>
+    }
+
+    public static void assertCanMove(ApplicationState from, ApplicationState to) {
+<span class="fc bfc" id="L41" title="All 2 branches covered.">        if (!canMove(from, to)) {</span>
+<span class="fc" id="L42">            throw new BusinessRuleException(&quot;An application that is &quot; + from.name().toLowerCase()</span>
+<span class="fc" id="L43">                    + &quot; cannot become &quot; + to.name().toLowerCase() + &quot;.&quot;);</span>
+        }
+<span class="fc" id="L45">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>
