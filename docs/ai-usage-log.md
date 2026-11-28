@@ -5,9 +5,9 @@ One entry per meaningful use.
 | Date | Member | Tool and model | Purpose | Prompt summary | Kept | Modified (how) | Rejected (why) |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | 13–14 November 2026 | Aisha | ChatGPT; model not recorded | Address difficulty organizing the test strategy and GitHub workflow | Explain the setup steps and help structure the initial testing plan | Strategy draft and workflow guidance | Used module-based branch names without personal names | None recorded |
-| 24–27 November 2026 | Lana | ChatGPT (GPT-6) | Help with Users and Security testing, automated test creation and GitHub workflow | Explain JUnit and MockMvc tests, reproduce security defects, troubleshoot Maven and guide documentation updates | Test guidance, four automated security regression tests and GitHub workflow instructions | Reviewed code and test behavior; ran tests locally; verified the coordinator settings CSRF defect by confirming the setting changed from 72 to 48 hours without a CSRF token; updated test-case documentation and submitted PR #41 | Did not change expected security results just to make failing tests pass |
-| 15–19 November 2026 | Areeg | Claude (Anthropic) | Step guidance and wording help | Explain steps and output; suggest wording | Starter test code and first test-case draft (AI-generated package); report wording | I reviewed the tests against the requirements, ran all JUnit (O01–O08) and Engine (E01–E18) tests myself, collected the evidence, reproduced every defect on the running system and reported #18, #22–#27 | None |
-
+| 24–27 November 2026 | Lana | ChatGPT (GPT-6) | Users and Security testing, automated tests and GitHub workflow | Explain JUnit and MockMvc tests, reproduce security defects, troubleshoot Maven and update documentation | Test guidance, security regression test drafts and GitHub instructions | Reviewed code against requirements, ran tests locally, checked execution evidence and updated test-case documentation | Did not change expected security results to make failing tests pass |
+| 15–19 November 2026 | Areeg | Claude (Anthropic) | Step guidance and wording help | Explain steps and output; suggest wording | AI-assisted starter test code, initial test-case draft and report wording | Reviewed tests against requirements, executed JUnit O01–O08 and Engine E01–E18, collected evidence and reported #18 and #22–#27 | Did not treat generated code or explanations as execution evidence |
+| 26–27 November 2026 | Areeg | Claude (Anthropic); model reported by Areeg as Claude Opus 5.5 | Deadline, concurrency, allowance, agreement, notification and AI Assistant testing | Draft tests and scripts from requirements and OpenAPI; interpret results and draft reports | AI-assisted drafts of OffersDeadlineBoundaryTest, OffersAgreementTest, AiAssistantAcceptanceTest, test_last_seat_race.py, test_allowance_boundaries.py and fake_ai_provider.py; report wording | Reviewed expected values, executed tests and manual checks, collected evidence for #38–#40, #47–#49 and #51–#57; corrected an ambiguous prompt assertion, incorrect race-message extraction and chunked-request handling | Did not weaken correct assertions, change vendor business code or claim AI-04/AI-09 results without real-model execution |
 | 13–14 November 2026 | Aisha | ChatGPT; model not recorded | Design and draft acceptance/Engine checks | Help implement requirement-based boundary, state, ownership and Engine contract checks | StudentApplicationsAcceptanceTest.java; test_application_engine.py; case/results drafts and command guidance | Results populated from Aisha's actual 16 JUnit and 11 Engine executions; distinguished assertion failures from unexpected exceptions, mocks from real Engine calls, and partial coverage from complete requirements | A candidate Engine rounding finding was not retained when a corrected fixture returned 18; empty optional-skill scoring was separated from rounding |
 | 14–16 November 2026 | Aisha | ChatGPT; model not recorded | Draft defect reports and traceability | Explain failures and prepare reproducible reports with evidence and requirement links | Issue drafts for #4–#11, #13–#16, #20, #21, #29–#31; report inventory | Aisha performed submissions and supplied issue numbers/screenshots; repeated findings grouped under existing issues, including M05 evidence under #9 | Failure count was not treated as distinct bug count; Engine internal causes were not asserted from black-box results |
 | 16 November 2026 | Aisha | ChatGPT; model not recorded | Guide M04/M06 manual checks | Test filter retention, error specificity and retained input | Step guidance and case/results text | M06 disabled-button attribute temporarily removed in DevTools and explicitly documented; M04 tested State/Company pagination plus a one-page Posting id fixture | Initial repeated-click advice for a disabled button did not reveal server behavior; corrected after source inspection. Posting-filter pagination was not claimed tested |
@@ -39,12 +39,12 @@ was merged through PRs #37 and #41. Student Applications
 PR #17 was merged on 27 November 2026.
 
 AI assistance included retained code and documentation, not
-only explanations. Aisha supplied the actual local execution
-output and performed the manual UI checks and GitHub actions.
-Aisha's model/version was not recorded at the time and is not
-reconstructed here. Local reports, issue screenshots and
-recorded commits support the results. Generated tests were
-not assumed to pass before execution.
+only explanations. Aisha supplied local execution output and
+performed the manual UI checks and GitHub actions. Aisha's
+model/version was not recorded at the time and is not
+reconstructed here. Local reports, screenshots and recorded
+commits support the results. Generated tests were not assumed
+to pass before execution.
 
 The most useful verification was separating testing layers:
 a passing state-machine check did not guarantee enforcement
@@ -57,25 +57,39 @@ instruction coverage as line coverage.
 The combined Portal execution on 27 November 2026 ran
 236 tests: 217 passed, 17 failures, 2 errors and 0 skipped.
 Service-layer line coverage was 74.16% (769 of 1,037 lines).
-These results include vendor and team tests and do not
+These results include vendor and team tests. They do not
 establish that all requirements were satisfied. Evidence is
-preserved in evidence/combined-2026-11-27/.
+preserved in evidence/combined-2026-11-27/. This execution
+does not include the phase-two tests submitted in PR #58.
 
-Areeg used Claude to help explain testing steps and draft
-test code, scripts and reports. She reviewed the retained
-work against the requirements and recorded results from her
-own executions on 15 and 26–27 November 2026. Her AI Assistant
-checks used mocked, simulated or local fake providers;
-they do not establish real-model behaviour. Real-model
-evaluation remained pending because credentials were
-unavailable.
+Areeg used Claude for explanations, test and script drafts,
+and report wording. She reviewed the retained work against
+the requirements and recorded results from her own executions
+on 15 and 26–27 November 2026. Comparing the Engine with an
+independent calculation and testing the Portal with a local
+fake provider exposed failures beyond successful inputs.
+
+Some AI-assisted drafts required correction after execution:
+a GPA value matched an overly broad question-count assertion,
+the race script extracted the wrong message, and the fake
+provider initially could not read chunked requests. These
+problems were corrected without weakening requirement-based
+expected results.
+
+Areeg's AI Assistant evidence is identified as mocked-client,
+simulated-provider or local fake-provider testing. It does
+not establish real-model behaviour. Real-model evaluation
+remained pending because credentials were unavailable.
 
 Lana used AI assistance for Users and Security test design,
 automated regression checks, GitHub workflow and documentation.
-Her contribution and execution claims are supported by the
-corresponding tests, issue evidence and repository history.
+Execution claims must agree with the corresponding reports,
+issue evidence and repository history. The Settings-CSRF
+test's failed HTTP assertion does not, by itself, verify its
+later unchanged-setting assertion; any mutation claim needs
+separate evidence.
 
 Remaining performance, real-model AI and system-test gaps
 are explicitly retained. AI-generated explanations were not
-treated as execution evidence, and each member remains
-responsible for verifying their own recorded contribution.
+treated as execution evidence. Each member remains responsible
+for verifying their own recorded contribution.
