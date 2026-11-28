@@ -94,30 +94,64 @@ including how we checked, changed or rejected the output.
 
 API keys, credentials and portal/data will not be committed.
 
+
 ## Changes along the way (date, what changed, why)
 
 | Date | What changed | Why |
 | --- | --- | --- |
 | 13 November 2026 | Created the initial strategy and assigned three primary modules. | Establish responsibilities and prioritize testing risks. |
+| 27 November 2026 | Completed Users and Security test design with 12 test cases, added automated regression tests for password validation, authorization and CSRF protection, and merged the changes through PR #41. | Document confirmed security defects, improve regression coverage and keep the test evidence linked to requirements. |
 
 | 14 November 2026 | Executed Student Applications Portal integration and Engine API suites. | Establish reproducible results against application rules and the Engine contract. |
 | 16 November 2026 | Added synchronized concurrency and state-transition checks; executed pagination, input-retention and local HTTP timing checks. | Investigate race conditions and service paths beyond the original suite; record hardware and scope limitations. |
 | 19 November 2026 | Added authenticated concurrent HTTP submission checks and a clean GOOD fixture for limit tests. | Confirm duplicate persistence through HTTP and reduce ambiguity from existing application history. |
 | 22 November 2026 | Investigated eligibility mismatch (#36); temporarily lowered default GPA for isolated PROBATION boundary testing, then restored 2.00. | Separate eligibility failure from limit enforcement; 1→2 passed and 2→3 failed (#6). |
-| 22 November 2026 | Verified CI at commit 278e123: 223 Portal tests, 213 passed, 8 failures, 2 errors; service line coverage 72.90%. | Reconcile current suite totals and coverage with the uploaded reports; keep historical executions separate. |
+| 22 November 2026 | Verified historical CI at commit 278e123: 223 Portal tests, 213 passed, 8 failures, 2 errors; service line coverage 72.90%. | Preserve the historical execution separately from later combined results. |
+| 25 November 2026 | Executed Posting ID 26 pagination: Next cleared the filter and changed 50 filtered results into 1,127 unfiltered results (#29). | Complete the previously untested Posting-filter pagination check. |
+| 26–27 November 2026 | Extended Offers and Allowance testing to deadline boundaries, last-seat concurrency, calendar calculations, agreement recalculation and notifications; added mocked and fake-provider AI checks. | Address gaps in the initial design and preserve phase-two evidence separately pending PR review and merge. |
+| 27 November 2026 | Merged Student Applications PR #17 and executed the combined Portal suite at commit a6921de: 236 tests, 217 passed, 17 failures, 2 errors and 0 skipped. Service line coverage was 74.16%. | Verify the merged contributions and preserve reports, coverage and the tested commit in evidence/combined-2026-11-27/. |
+
+We record dated changes together with the evidence or feedback
+that justified them.
 
 ## Current execution limitations
 
-Student Applications retains partial scope: actual browser double-clicks and
-network timeouts, missing-CSRF interpretation, GOOD configured-limit submission
-enforcement, posting-filter retention across multiple pages, wider system and
-authorization paths, and reference-hardware/concurrent-user performance remain
-unverified. Local sequential HTTP timing does not establish full performance
-compliance. AI Assistant repeated evaluations and other modules require their
-own executed team evidence. Planned tools and checks are not completed results.
+Student Applications retains partial scope: actual browser
+double-clicks, real-network timeout recovery, interpretation
+of the separate missing-CSRF HTTP 405 response, GOOD
+configured-limit submission enforcement, wider system and
+authorization paths, and reference-hardware/concurrent-user
+performance remain unverified.
 
-The 22 November service-package line coverage target is met, but the
-all-tests-pass condition is not met. Coverage includes vendor tests and must
-not be attributed solely to Aisha's acceptance tests. PR #17 had two pending
-reviews at the last check; shared case consolidation and final reporting remain
-outstanding. No production-code fixes are claimed.
+State, Company and Posting filter retention were tested and
+failed (#29). Posting-filter pagination is no longer untested.
+
+Local sequential HTTP timing provides partial PERF-01
+evidence; it does not establish full performance compliance.
+Offers and Allowance timing remains unexecuted.
+
+AI Assistant checks include mocked-client, simulated-provider
+and local fake-provider evidence. Real-model evaluation remains
+pending because credentials were unavailable. These checks
+must not be described as real-model results.
+
+Lana's logout-CSRF and coordinator Settings-CSRF checks are
+separate from Aisha's inconclusive HTTP 405 observation.
+The Settings regression returned HTTP 302 instead of the
+expected HTTP 403 (#46). Its later unchanged-setting assertion
+was not reached after the HTTP assertion failed; any mutation
+claim requires separate supporting evidence.
+
+The combined execution exceeded the 70% service-layer line
+coverage target: 769 of 1,037 lines, or 74.16%. However, the
+suite did not fully pass. Coverage includes vendor and team
+tests and must not be attributed solely to one member.
+
+PR #17 was merged on 27 November 2026. Phase-two tests in
+PR #58 are not included in the preserved 236-test run.
+After additional tests are merged, the team must preserve
+a new combined execution and update the report accordingly.
+
+Final case consolidation, issue validation and report review
+remain necessary. Planned checks are not completed results.
+No production-code fixes are claimed.
